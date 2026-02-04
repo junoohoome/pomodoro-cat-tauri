@@ -1,0 +1,111 @@
+// 任务优先级
+export type TaskPriority = "high" | "medium" | "low";
+
+// 任务状态
+export type TaskStatus = "active" | "completed";
+
+// 计时器状态
+export type TimerState = "idle" | "running" | "paused" | "break";
+
+// 番茄钟类型
+export type PomodoroType = "focus" | "break";
+
+// 任务实体
+export interface Task {
+  id: number;
+  name: string;
+  targetPomodoros: number;
+  completedPomodoros: number;
+  completed: boolean;
+  priority: TaskPriority;
+  deadline?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// 新建任务
+export interface NewTask {
+  name: string;
+  targetPomodoros: number;
+  priority: TaskPriority;
+  deadline?: string | null;
+}
+
+// 用户配置
+export interface UserConfig {
+  id: number;
+  focusDuration: number;      // 专注时长（分钟）
+  breakDuration: number;      // 休息时长（分钟）
+  enableNotifications: boolean;
+  enableSound: boolean;
+  theme: "light" | "dark" | "auto";
+  updatedAt: string;
+}
+
+// 番茄钟记录
+export interface PomodoroRecord {
+  id: number;
+  taskId?: number;
+  duration: number;           // 专注分钟数
+  type: PomodoroType;
+  recordedAt: string;
+}
+
+// 猫咪成长阶段
+export interface CatStage {
+  level: number;
+  name: string;
+  cansNeeded: number;
+  icon: string;
+}
+
+// 用户数据（猫咪系统）
+export interface UserData {
+  level: number;
+  totalCans: number;          // 总罐头数
+  totalMinutes: number;       // 总专注分钟数
+  streakDays: number;         // 连续天数
+  currentTaskId?: number;
+}
+
+// 统计数据
+export interface Stats {
+  todayCount: number;         // 今日完成次数
+  todayMinutes: number;       // 今日专注分钟数
+  weekCount: number;          // 本周完成次数
+  weekMinutes: number;        // 本周专注分钟数
+  totalCount: number;         // 总完成次数
+  totalMinutes: number;       // 总专注分钟数
+  dailyData: DailyStats[];    // 最近7天数据
+}
+
+// 每日统计
+export interface DailyStats {
+  date: string;               // YYYY-MM-DD
+  count: number;
+  minutes: number;
+}
+
+// 计时器状态
+export interface TimerData {
+  state: TimerState;
+  remainingSeconds: number;
+  totalSeconds: number;
+  type: PomodoroType;
+  taskId?: number;
+}
+
+// 分页参数
+export interface PaginationParams {
+  page: number;
+  pageSize: number;
+}
+
+// 分页结果
+export interface PaginatedResult<T> {
+  data: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  hasMore: boolean;
+}

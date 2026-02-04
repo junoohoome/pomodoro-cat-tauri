@@ -1,0 +1,188 @@
+@import "tailwindcss";
+
+/*
+ * 1:1 复原原小程序 UI
+ * 使用原版配色和样式
+ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  background: linear-gradient(135deg, #FFF8F0 0%, #FFE8D6 100%);
+  color: #2C2C2C;
+  min-height: 100vh;
+}
+
+/* 原版颜色变量 */
+:root {
+  --primary-color: #FF6B6B;
+  --secondary-color: #FFA94D;
+  --bg-color: #FFF8F0;
+  --text-color: #2C2C2C;
+  --success-color: #51CF66;
+  --card-bg: #FFFFFF;
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --card-shadow: 0 8px 24px rgba(255, 107, 107, 0.12);
+  --border-color: #FFECE0;
+}
+
+/* 卡片样式 */
+.card {
+  background: linear-gradient(135deg, #FFFFFF 0%, #FFF8F0 100%);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--border-color);
+  margin-bottom: 12px;
+}
+
+/* 按钮样式 */
+.btn {
+  border-radius: 22px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+}
+
+.btn:active {
+  transform: scale(0.97);
+  opacity: 0.9;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #FF7A7A 0%, #FF9C8F 100%);
+  color: white;
+  box-shadow: 0 5px 13px rgba(255, 107, 107, 0.24);
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #FFC371 0%, #FFD7A6 100%);
+  color: #A64B00;
+  box-shadow: 0 5px 12px rgba(255, 169, 77, 0.22);
+}
+
+.btn-outline {
+  background: linear-gradient(135deg, #FFFFFF 0%, #FFF8F0 100%);
+  border: 1px solid #FFCEC5;
+  color: #FF6B6B;
+  box-shadow: 0 4px 10px rgba(255, 107, 107, 0.16);
+}
+
+/* 优先级徽章 */
+.priority-badge {
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  box-shadow: 0 2px 5px rgba(255, 107, 107, 0.12);
+}
+
+.priority-high {
+  background: #FFE5E5;
+  color: #FF6B6B;
+  border: 1px solid #FFC9C9;
+}
+
+.priority-medium {
+  background: #FFF4E5;
+  color: #FFA94D;
+  border: 1px solid #FFD9A8;
+}
+
+.priority-low {
+  background: #E8F5E9;
+  color: #66BB6A;
+  border: 1px solid #C7E8CC;
+}
+
+/* 进度条 */
+.progress-bar {
+  height: 8px;
+  background: #f0f0f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #FF6B6B 0%, #FFA94D 100%);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+/* 文本样式 */
+.text-primary {
+  color: var(--primary-color);
+}
+
+.text-secondary {
+  color: var(--secondary-color);
+}
+
+.text-gray {
+  color: #999;
+}
+
+.text-muted {
+  color: #666;
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 107, 107, 0.3);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 107, 107, 0.5);
+}
+
+/* 猫咪呼吸动画 */
+@keyframes catBreath {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.cat-breathing {
+  animation: catBreath 2s ease-in-out infinite;
+}
+
+/* 脉冲动画 */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s infinite;
+}

@@ -1,0 +1,21 @@
+[package]
+name = "pomodoro-cat-tauri"
+version = "0.1.0"
+description = "番茄专注猫 - 一款可爱的番茄钟应用"
+authors = ["you"]
+edition = "2021"
+
+[lib]
+name = "pomodoro_cat_tauri_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["devtools", "tray-icon", "macos-private-api"] }
+tauri-plugin-opener = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rusqlite = { version = "0.32", features = ["bundled"] }
+chrono = "0.4"
