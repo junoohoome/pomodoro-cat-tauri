@@ -6,20 +6,95 @@ mod db;
 mod commands;
 
 use db::*;
-use std::sync::Mutex;
-use tauri::Manager;
+use std::sync::{Arc, Mutex};
+use tauri::{AppHandle, Manager};
 
-// TrayIconState 全局状态定义
-#[cfg(target_os = "macos")]
-use tauri::tray::TrayIcon;
-
+// TrayIconState 全局状态管理
 #[derive(Clone)]
-pub struct TrayIconState;
+pub struct TrayIconState(pub Arc<AppHandle>);
 
 #[cfg(target_os = "macos")]
 impl TrayIconState {
-    pub fn get() -> Option<TrayIcon> {
-        None // 占位，实际通过其他方式获取
+    pub fn new(app: &tauri::AppHandle) -> Self {
+        Self(Arc::new(app.clone()))
+    }
+
+    /// 更新菜单栏显示（创建新的，旧的会自动替换）
+    pub fn update_tray(&self, title: &str) {
+        let app = self.0.clone();
+
+        // 创建新的 tray icon（带新标题）
+        // 注意：Tauri 2 会自动替换相同 ID 的 tray icon
+        if let Err(e) = self.create_tray_icon(&app, title) {
+            eprintln!("Failed to create tray icon: {}", e);
+        }
+    }
+
+    #[cfg(target_os = "macos")]
+    fn create_tray_icon(&self, app: &tauri::AppHandle, title: &str) -> Result<(), String> {
+        use tauri::tray::{TrayIconBuilder, TrayIconEvent};
+        use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
+
+        // 重新创建菜单
+        let show_item = MenuItem::with_id(app, "show", "显示窗口", true, None::<&str>)
+            .map_err(|e| e.to_string())?;
+        let hide_item = MenuItem::with_id(app, "hide", "隐藏窗口", true, None::<&str>)
+            .map_err(|e| e.to_string())?;
+        let sep1 = PredefinedMenuItem::separator(app)
+            .map_err(|e| e.to_string())?;
+        let quit_item = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)
+            .map_err(|e| e.to_string())?;
+
+        let menu = Menu::with_items(app, &[&show_item, &hide_item, &sep1, &quit_item])
+            .map_err(|e| e.to_string())?;
+
+        let _tray = TrayIconBuilder::new()
+            .menu(&menu)
+            .menu_on_left_click(false)
+            .title(title)
+            .build(app)
+            .map_err(|e| e.to_string())?;
+
+        // 重新绑定事件监听器
+        let app_handle = app.clone();
+        let app_handle_menu = app_handle.clone();
+        app.on_tray_icon_event(move |_tray_id, event| {
+            match event {
+                TrayIconEvent::Click {
+                    id: _,
+                    position: _,
+                    rect: _,
+                    button,
+                    button_state: _,
+                } => {
+                    if button == tauri::tray::MouseButton::Left {
+                        let window = app_handle.get_webview_window("main").unwrap();
+                        let _ = window.set_focus();
+                    }
+                }
+                _ => {}
+            }
+        });
+
+        app.on_menu_event(move |_window, event| {
+            match event.id.0.as_str() {
+                "show" => {
+                    let window = app_handle_menu.get_webview_window("main").unwrap();
+                    let _ = window.show();
+                    let _ = window.set_focus();
+                }
+                "hide" => {
+                    let window = app_handle_menu.get_webview_window("main").unwrap();
+                    let _ = window.hide();
+                }
+                "quit" => {
+                    app_handle_menu.exit(0);
+                }
+                _ => {}
+            }
+        });
+
+        Ok(())
     }
 }
 
