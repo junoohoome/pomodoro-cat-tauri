@@ -4,6 +4,7 @@ import { useTaskStore } from "../stores/taskStore";
 import { useUserStore } from "../stores/userStore";
 import { useTestModeStore } from "../stores/testModeStore";
 import { invoke } from "@tauri-apps/api/core";
+import { sendNotification } from "@tauri-apps/plugin-notification";
 
 const CAT_ICONS: Record<number, string> = {
   1: "🐱",
@@ -73,10 +74,24 @@ export default function TimerPage() {
         await incrementTaskProgress(currentTask.id);
       }
 
+      // 发送系统通知
+      await sendNotification({
+        title: '🍅 专注完成！',
+        body: '太棒了！休息一下吧~',
+        sound: 'default',
+      });
+
       // 专注完成后，停止计时器回到空闲状态（与小程序一致）
       // 用户需要手动开始下一次计时
       stop();
     } else {
+      // 休息完成通知
+      await sendNotification({
+        title: '☕ 休息结束！',
+        body: '准备开始新的专注吧~',
+        sound: 'default',
+      });
+
       stop();
     }
   };

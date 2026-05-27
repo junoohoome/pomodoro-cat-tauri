@@ -26,6 +26,7 @@ impl TrayIconState {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_notification::init())
         .setup(|app| {
             // 初始化数据库
             let db_path = get_db_path(app.handle());
