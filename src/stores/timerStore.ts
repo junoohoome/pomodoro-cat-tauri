@@ -10,17 +10,13 @@ function formatTime(seconds: number): string {
 }
 
 // 更新菜单栏标题
-async function updateTrayTitle(state: TimerState, remainingSeconds: number, type: PomodoroType) {
+async function updateTrayTitle(state: TimerState, remainingSeconds: number, _type: PomodoroType) {
   try {
-    let title = "🐱"; // 默认显示猫咪logo
+    let title = ""; // 默认为空（只显示 logo 图标）
 
-    if (state === "running") {
-      const timeStr = formatTime(remainingSeconds);
-      const emoji = type === "focus" ? "🍅" : "☕";
-      title = `${emoji} ${timeStr}`;
-    } else if (state === "paused") {
-      const timeStr = formatTime(remainingSeconds);
-      title = `⏸️ ${timeStr}`;
+    if (state === "running" || state === "paused") {
+      // 只显示时间，不显示 emoji
+      title = formatTime(remainingSeconds);
     }
 
     await invoke("update_tray_title", { title });

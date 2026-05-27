@@ -37,6 +37,11 @@ impl TrayIconState {
         use tauri::tray::{TrayIconBuilder, TrayIconEvent};
         use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 
+        // 使用应用默认图标作为菜单栏图标
+        let tray_icon = app.default_window_icon()
+            .ok_or("Failed to get default window icon")?
+            .clone();
+
         // 重新创建菜单
         let show_item = MenuItem::with_id(app, "show", "显示窗口", true, None::<&str>)
             .map_err(|e| e.to_string())?;
@@ -51,7 +56,8 @@ impl TrayIconState {
             .map_err(|e| e.to_string())?;
 
         // 创建tray icon - Tauri 2的API
-        let _tray = TrayIconBuilder::new()
+        let _tray = TrayIconBuilder::with_id("main-tray")
+            .icon(tray_icon)
             .menu(&menu)
             .menu_on_left_click(false)
             .title(title)

@@ -74,25 +74,53 @@ export default function TimerPage() {
         await incrementTaskProgress(currentTask.id);
       }
 
-      // 发送系统通知
-      await sendNotification({
-        title: '🍅 专注完成！',
-        body: '太棒了！休息一下吧~',
-        sound: 'default',
-      });
+      // 发送系统通知（使用多种图标方案）
+      try {
+        // 方案1：尝试使用应用图标路径
+        await sendNotification({
+          title: '🍅 专注完成！',
+          body: '太棒了！休息一下吧~',
+          sound: 'default',
+        });
+        console.log('✅ 通知已发送（使用应用图标）');
+      } catch (error) {
+        console.error('❌ 通知发送失败:', error);
+        // 备选方案：使用浏览器通知（可以自定义图标）
+        showBrowserNotification('🍅 专注完成！', '太棒了！休息一下吧~');
+      }
 
       // 专注完成后，停止计时器回到空闲状态（与小程序一致）
       // 用户需要手动开始下一次计时
       stop();
     } else {
-      // 休息完成通知
-      await sendNotification({
-        title: '☕ 休息结束！',
-        body: '准备开始新的专注吧~',
-        sound: 'default',
-      });
+      // 休息完成通知（使用应用图标）
+      try {
+        await sendNotification({
+          title: '☕ 休息结束！',
+          body: '准备开始新的专注吧~',
+          sound: 'default',
+        });
+        console.log('✅ 通知已发送（使用应用图标）');
+      } catch (error) {
+        console.error('❌ 通知发送失败:', error);
+        // 备选方案：使用浏览器通知
+        showBrowserNotification('☕ 休息结束！', '准备开始新的专注吧~');
+      }
 
       stop();
+    }
+  };
+
+  // 浏览器通知作为备选方案
+  const showBrowserNotification = (title: string, body: string) => {
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification(title, { body, icon: '/logo.png' });
+    } else if ("Notification" in window && Notification.permission !== "denied") {
+      Notification.requestPermission().then(permission => {
+        if (permission === "granted") {
+          new Notification(title, { body, icon: '/logo.png' });
+        }
+      });
     }
   };
 

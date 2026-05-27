@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    pomodoro_cat_tauri_lib::run()
+    pomodorocat_lib::run()
 }
