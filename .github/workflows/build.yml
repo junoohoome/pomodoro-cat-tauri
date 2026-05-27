@@ -50,8 +50,26 @@ jobs:
       - name: Install frontend dependencies
         run: npm install
 
+      - name: Check build environment
+        run: |
+          echo "Node version: $(node --version)"
+          echo "NPM version: $(npm --version)"
+          echo "Rust version: $(rustc --version)"
+          echo "Cargo version: $(cargo --version)"
+          echo "Current directory: $(pwd)"
+          echo "Directory contents:"
+          ls -la
+
       - name: Build
         run: npm run tauri build
+
+      - name: Check build output
+        if: always()
+        run: |
+          echo "Build output structure:"
+          find src-tauri/target/release/bundle -type f -o -type d | head -20
+          echo "DMG files:"
+          find src-tauri/target/release/bundle -name "*.dmg" -o -name "*.app" || echo "No DMG or app files found"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -65,6 +83,18 @@ jobs:
             src-tauri/target/release/bundle/msi/*.msi
             src-tauri/target/release/bundle/nsis/*.exe
           if-no-files-found: warn
+
+      - name: Create macOS app zip for release
+        if: startsWith(github.ref, 'refs/tags/') && matrix.platform.os == 'macos-13'
+        run: |
+          cd src-tauri/target/release/bundle/macos
+          zip -r pomodoro-cat-tauri.app.zip pomodoro-cat-tauri.app
+
+      - name: Create macOS app zip for release (ARM64)
+        if: startsWith(github.ref, 'refs/tags/') && matrix.platform.os == 'macos-14'
+        run: |
+          cd src-tauri/target/release/bundle/macos
+          zip -r pomodoro-cat-tauri.app.zip pomodoro-cat-tauri.app
 
       - name: Release (only for tags)
         if: startsWith(github.ref, 'refs/tags/')
