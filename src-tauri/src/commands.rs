@@ -1,6 +1,7 @@
 use crate::db::*;
+use crate::TrayIconState;
 use rusqlite::params;
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Manager, State};
 use chrono::{Utc, Datelike, Duration};
 
 // 获取任务列表
@@ -404,15 +405,12 @@ pub fn clear_pomodoro_records(app: AppHandle) -> Result<(), String> {
     Ok(())
 }
 
-// 更新菜单栏标题（显示计时时间）
+// 更新菜单栏标题（显示计时时间或恢复图标）
 #[tauri::command]
-pub fn update_tray_title(app: AppHandle, title: String) -> Result<(), String> {
+pub fn update_tray_title(state: State<TrayIconState>, title: String) -> Result<(), String> {
     #[cfg(target_os = "macos")]
     {
-        // 使用 Tauri 的事件系统发送更新消息
-        // 由于直接获取 tray icon 比较困难，我们暂时返回成功
-        // 实际的菜单栏标题更新可以在 Tauri 支持更好的 API 时实现
+        state.update_tray(&title);
     }
-
     Ok(())
 }
