@@ -123,84 +123,16 @@ pub fn run() {
             // === 创建菜单栏 ===
             #[cfg(target_os = "macos")]
             {
-                use tauri::tray::{TrayIconBuilder, TrayIconEvent};
-                use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
+                // 创建全局 TrayIconState
+                let tray_state = TrayIconState::new(app.handle());
 
-                // 显示窗口菜单项
-                let show_item = MenuItem::with_id(app, "show", "显示窗口", true, None::<&str>)
-                    .expect("Failed to create show menu item");
+                // 创建初始菜单栏图标
+                if let Err(e) = tray_state.create_tray_icon(app.handle(), "🐱") {
+                    eprintln!("Failed to create initial tray icon: {}", e);
+                }
 
-                // 隐藏窗口菜单项
-                let hide_item = MenuItem::with_id(app, "hide", "隐藏窗口", true, None::<&str>)
-                    .expect("Failed to create hide menu item");
-
-                // 分隔线
-                let sep1 = PredefinedMenuItem::separator(app).expect("Failed to create separator");
-
-                // 退出菜单项
-                let quit_item = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)
-                    .expect("Failed to create quit menu item");
-
-                // 创建菜单
-                let menu = Menu::with_items(app, &[&show_item, &hide_item, &sep1, &quit_item])
-                    .expect("Failed to create menu");
-
-                // 创建菜单栏图标
-                let _tray = TrayIconBuilder::new()
-                    .menu(&menu)
-                    .menu_on_left_click(false)
-                    .title("🐱")
-                    .build(app)
-                    .expect("Failed to create tray icon");
-
-                // 监听菜单栏点击事件
-                let app_handle = app.handle().clone();
-                app.on_tray_icon_event(move |_tray_id, event| {
-                    match event {
-                        TrayIconEvent::Click {
-                            id: _,
-                            position: _,
-                            rect: _,
-                            button,
-                            button_state: _,
-                        } => {
-                            if button == tauri::tray::MouseButton::Left {
-                                // 左键点击：切换窗口显示/隐藏
-                                let window = app_handle.get_webview_window("main").unwrap();
-                                if window.is_visible().unwrap() {
-                                    let _ = window.hide();
-                                } else {
-                                    let _ = window.show();
-                                    let _ = window.set_focus();
-                                }
-                            }
-                        }
-                        TrayIconEvent::DoubleClick { .. } => {}
-                        TrayIconEvent::Enter { .. } => {}
-                        TrayIconEvent::Leave { .. } => {}
-                        _ => {}
-                    }
-                });
-
-                // 监听菜单点击事件
-                let app_handle_menu = app.handle().clone();
-                app.on_menu_event(move |_window, event| {
-                    match event.id.0.as_str() {
-                        "show" => {
-                            let window = app_handle_menu.get_webview_window("main").unwrap();
-                            let _ = window.show();
-                            let _ = window.set_focus();
-                        }
-                        "hide" => {
-                            let window = app_handle_menu.get_webview_window("main").unwrap();
-                            let _ = window.hide();
-                        }
-                        "quit" => {
-                            app_handle_menu.exit(0);
-                        }
-                        _ => {}
-                    }
-                });
+                // 注册到 app state
+                app.manage(tray_state);
             }
 
             Ok(())
