@@ -254,12 +254,8 @@ export default function TimerPage() {
               color: '#FF6B6B',
               lineHeight: '1',
               display: 'block',
-              marginBottom: '8px',
               letterSpacing: '0.05em'
             }}>{formatTime(remainingSeconds)}</span>
-            <span className="timer-label" style={{ fontSize: '14px', color: '#999' }}>
-              {type === "focus" ? "专注" : "休息"}
-            </span>
           </div>
         </div>
       </div>
@@ -355,20 +351,6 @@ export default function TimerPage() {
             lineHeight: '1.45',
             wordBreak: 'break-word'
           }}>{currentTask.name}</span>
-        </div>
-      )}
-
-      {/* 当前任务占位符 */}
-      {!currentTask && (
-        <div className="current-task-placeholder" style={{
-          width: '100%',
-          marginTop: '16px',
-          textAlign: 'center',
-          padding: '8px'
-        }}>
-          <span className="placeholder-text" style={{ fontSize: '12px', color: '#999' }}>
-            长按任务列表中的任务以选择
-          </span>
         </div>
       )}
     </div>
