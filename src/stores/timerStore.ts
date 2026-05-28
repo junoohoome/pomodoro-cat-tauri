@@ -37,6 +37,11 @@ interface TimerStore {
   // 测试模式
   isTestMode: boolean;
 
+  // 时间戳（用于处理睡眠唤醒）
+  startTime: number | null;
+  targetEndTime: number | null;
+  pausedRemainingSeconds: number | null;
+
   // 操作
   start: (focusDuration: number, breakDuration: number) => void;
   pause: () => void;
@@ -63,29 +68,55 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
   type: "focus",
   taskId: undefined,
   isTestMode: false,
+  startTime: null,
+  targetEndTime: null,
+  pausedRemainingSeconds: null,
 
   start: (focusDuration: number, breakDuration: number) => {
     const { type } = get();
     const duration = type === "focus" ? focusDuration : breakDuration;
     const newSeconds = duration * 60;
+
+    const now = Date.now();
+    const targetEndTime = now + (newSeconds * 1000);
+
     set({
       state: "running",
       remainingSeconds: newSeconds,
       totalSeconds: newSeconds,
+      startTime: now,
+      targetEndTime: targetEndTime,
+      pausedRemainingSeconds: null,
     });
     updateTrayTitle("running", newSeconds, type);
   },
 
   pause: () => {
     const { remainingSeconds, type } = get();
-    set({ state: "paused" });
+    set({
+      state: "paused",
+      pausedRemainingSeconds: remainingSeconds,
+      startTime: null,
+      targetEndTime: null,
+    });
     updateTrayTitle("paused", remainingSeconds, type);
   },
 
   resume: () => {
-    const { remainingSeconds, type } = get();
-    set({ state: "running" });
-    updateTrayTitle("running", remainingSeconds, type);
+    const { pausedRemainingSeconds, type } = get();
+    if (pausedRemainingSeconds === null) return;
+
+    const now = Date.now();
+    const targetEndTime = now + (pausedRemainingSeconds * 1000);
+
+    set({
+      state: "running",
+      remainingSeconds: pausedRemainingSeconds,
+      startTime: now,
+      targetEndTime: targetEndTime,
+      pausedRemainingSeconds: null,
+    });
+    updateTrayTitle("running", pausedRemainingSeconds, type);
   },
 
   stop: () => {
@@ -96,6 +127,9 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       remainingSeconds: initialSeconds,
       totalSeconds: initialSeconds,
       type: "focus",
+      startTime: null,
+      targetEndTime: null,
+      pausedRemainingSeconds: null,
     });
     updateTrayTitle("idle", initialSeconds, "focus");
   },
@@ -103,11 +137,18 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
   switchToBreak: () => {
     const { isTestMode } = get();
     const breakSeconds = isTestMode ? TEST_BREAK * 60 : NORMAL_BREAK * 60;
+
+    const now = Date.now();
+    const targetEndTime = now + (breakSeconds * 1000);
+
     set({
       state: "running",
       type: "break",
       remainingSeconds: breakSeconds,
       totalSeconds: breakSeconds,
+      startTime: now,
+      targetEndTime: targetEndTime,
+      pausedRemainingSeconds: null,
     });
     updateTrayTitle("running", breakSeconds, "break");
   },
@@ -117,12 +158,13 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
   },
 
   tick: () => {
-    const { remainingSeconds, state, type } = get();
-    if (state === "running" && remainingSeconds > 0) {
-      const newSeconds = remainingSeconds - 1;
-      set({ remainingSeconds: newSeconds });
+    const { targetEndTime, state, type } = get();
+    if (state === "running" && targetEndTime !== null) {
+      const now = Date.now();
+      const remaining = Math.max(0, Math.floor((targetEndTime - now) / 1000));
+      set({ remainingSeconds: remaining });
       // 每秒更新菜单栏
-      updateTrayTitle("running", newSeconds, type);
+      updateTrayTitle("running", remaining, type);
     }
   },
 
@@ -136,6 +178,9 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       isTestMode,
       remainingSeconds: initialSeconds,
       totalSeconds: initialSeconds,
+      startTime: null,
+      targetEndTime: null,
+      pausedRemainingSeconds: null,
     });
     updateTrayTitle("idle", initialSeconds, "focus");
   },
