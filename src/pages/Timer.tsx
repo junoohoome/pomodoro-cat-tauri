@@ -32,6 +32,8 @@ export default function TimerPage() {
     pause,
     resume,
     stop,
+    prepareBreakMode,
+    switchToFocus,
     setTestMode,
   } = useTimerStore();
 
@@ -90,9 +92,8 @@ export default function TimerPage() {
         showBrowserNotification('🍅 专注完成！', '太棒了！休息一下吧~');
       }
 
-      // 专注完成后，停止计时器回到空闲状态（与小程序一致）
-      // 用户需要手动开始下一次计时
-      stop();
+      // 专注完成后，切换到休息类型但保持空闲状态，等待用户手动开始
+      prepareBreakMode();
     } else {
       // 休息完成通知（使用应用图标）
       try {
@@ -254,8 +255,12 @@ export default function TimerPage() {
               color: '#FF6B6B',
               lineHeight: '1',
               display: 'block',
+              marginBottom: '8px',
               letterSpacing: '0.05em'
             }}>{formatTime(remainingSeconds)}</span>
+            <span className="timer-label" style={{ fontSize: '14px', color: '#999' }}>
+              {type === "focus" ? "专注" : "休息"}
+            </span>
           </div>
         </div>
       </div>
@@ -269,7 +274,7 @@ export default function TimerPage() {
         zIndex: 10,
         alignItems: 'center'
       }}>
-        {state === "idle" && (
+        {state === "idle" && type === "focus" && (
           <button
             onClick={() => start(focusDuration, breakDuration)}
             className="btn btn-primary"
@@ -282,6 +287,34 @@ export default function TimerPage() {
           >
             开始
           </button>
+        )}
+        {state === "idle" && type === "break" && (
+          <>
+            <button
+              onClick={() => start(focusDuration, breakDuration)}
+              className="btn btn-primary"
+              style={{
+                minWidth: '80px',
+                height: '44px',
+                padding: '0 16px',
+                fontSize: '14px'
+              }}
+            >
+              开始
+            </button>
+            <button
+              onClick={switchToFocus}
+              className="btn btn-outline"
+              style={{
+                minWidth: '80px',
+                height: '44px',
+                padding: '0 16px',
+                fontSize: '14px'
+              }}
+            >
+              跳过
+            </button>
+          </>
         )}
         {state === "running" && (
           <>

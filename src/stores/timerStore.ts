@@ -50,6 +50,8 @@ interface TimerStore {
   resume: () => void;
   stop: () => void;
   switchToBreak: () => void;
+  prepareBreakMode: () => void;
+  switchToFocus: () => void;
   setTaskId: (taskId: number | undefined) => void;
   tick: () => void;
   setTestMode: (isTestMode: boolean) => void;
@@ -153,6 +155,38 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       pausedRemainingSeconds: null,
     });
     updateTrayTitle("running", breakSeconds, "break");
+  },
+
+  prepareBreakMode: () => {
+    const { isTestMode } = get();
+    const breakSeconds = isTestMode ? TEST_BREAK * 60 : NORMAL_BREAK * 60;
+
+    set({
+      state: "idle",
+      type: "break",
+      remainingSeconds: breakSeconds,
+      totalSeconds: breakSeconds,
+      startTime: null,
+      targetEndTime: null,
+      pausedRemainingSeconds: null,
+    });
+    updateTrayTitle("idle", breakSeconds, "break");
+  },
+
+  switchToFocus: () => {
+    const { isTestMode } = get();
+    const focusSeconds = isTestMode ? TEST_FOCUS * 60 : NORMAL_FOCUS * 60;
+
+    set({
+      state: "idle",
+      type: "focus",
+      remainingSeconds: focusSeconds,
+      totalSeconds: focusSeconds,
+      startTime: null,
+      targetEndTime: null,
+      pausedRemainingSeconds: null,
+    });
+    updateTrayTitle("idle", focusSeconds, "focus");
   },
 
   setTaskId: (taskId: number | undefined) => {
