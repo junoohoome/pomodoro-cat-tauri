@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTaskStore } from "../stores/taskStore";
+import { useTimerStore } from "../stores/timerStore";
 
 export default function TasksPage() {
   const {
@@ -14,6 +15,8 @@ export default function TasksPage() {
     setCurrentTask,
   } = useTaskStore();
 
+  const { state: timerState } = useTimerStore();
+
   const [showCompleted, setShowCompleted] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [editingTask, setEditingTask] = useState<any>(null);
@@ -23,6 +26,10 @@ export default function TasksPage() {
   const [targetPomodoros, setTargetPomodoros] = useState(1);
   const [priority, setPriority] = useState<"high" | "medium" | "low">("medium");
   const [deadline, setDeadline] = useState<string>("");
+
+  // Toast 提示
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
 
   useEffect(() => {
     fetchActiveTasks();
@@ -119,7 +126,20 @@ export default function TasksPage() {
   };
 
   const handleSelectTask = (task: any) => {
-    setCurrentTask(task);
+    // 检查计时器状态，只有在空闲状态才能切换任务
+    if (timerState !== 'idle') {
+      setToastMessage('请先完成当前番茄钟或停止计时');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 2000);
+      return;
+    }
+
+    // 如果点击的是当前任务，则取消选中
+    if (currentTask?.id === task.id) {
+      setCurrentTask(null);
+    } else {
+      setCurrentTask(task);
+    }
   };
 
   const tasks = showCompleted ? completedTasks : activeTasks;
@@ -214,9 +234,12 @@ export default function TasksPage() {
                 position: 'relative',
                 transition: 'all 0.3s ease',
                 border: currentTask?.id === task.id && !showCompleted ? '2px solid #FF6B6B' : 'none',
-                boxShadow: currentTask?.id === task.id && !showCompleted ? '0 2px 8px rgba(255, 107, 107, 0.25)' : '0 1px 4px rgba(0, 0, 0, 0.04)'
+                boxShadow: currentTask?.id === task.id && !showCompleted ? '0 2px 8px rgba(255, 107, 107, 0.25)' : '0 1px 4px rgba(0, 0, 0, 0.04)',
+                display: 'flex',
+                alignItems: 'center',
+                padding: '10px',
+                gap: '12px'
               }}
-              onClick={() => !showCompleted && handleSelectTask(task)}
               onMouseEnter={(e) => {
                 const actions = e.currentTarget.querySelector('.task-actions');
                 if (actions) (actions as HTMLElement).style.opacity = '1';
@@ -226,13 +249,48 @@ export default function TasksPage() {
                 if (actions) (actions as HTMLElement).style.opacity = '0';
               }}
             >
+              {/* 选择按钮 */}
+              {!showCompleted && (
+                <div
+                  className={`task-selector ${currentTask?.id === task.id ? 'selected' : ''} ${timerState !== 'idle' ? 'disabled' : ''}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSelectTask(task);
+                  }}
+                  style={{
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '50%',
+                    border: `2px solid ${
+                      currentTask?.id === task.id
+                        ? '#FF6B6B'
+                        : timerState !== 'idle'
+                          ? '#CCCCCC'
+                          : '#E0E0E0'
+                    }`,
+                    background: currentTask?.id === task.id ? '#FF6B6B' : 'transparent',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: timerState !== 'idle' ? 'not-allowed' : 'pointer',
+                    flexShrink: 0,
+                    transition: 'all 0.2s',
+                    opacity: timerState !== 'idle' ? 0.5 : 1
+                  }}
+                >
+                  {currentTask?.id === task.id && (
+                    <span style={{ color: 'white', fontSize: '12px', fontWeight: '600' }}>✓</span>
+                  )}
+                </div>
+              )}
+
               <div className="task-main" style={{
                 display: 'flex',
                 flexDirection: 'column',
                 background: '#FFFFFF',
-                padding: '10px',
                 gap: '3px',
-                width: '100%'
+                flex: 1,
+                minWidth: 0
               }}>
                 <div className="task-header" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <span className={`task-name ${task.completedPomodoros >= task.targetPomodoros ? 'completed' : ''}`} style={{
@@ -250,17 +308,6 @@ export default function TasksPage() {
                   {task.completed && <span className="completed-badge" style={{ fontSize: '16px', color: '#51CF66', fontWeight: '700', flexShrink: 0 }}>✓</span>}
                 </div>
                 <div className="task-meta" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  {currentTask?.id === task.id && !showCompleted && (
-                    <span className="current-badge" style={{
-                      fontSize: '10px',
-                      color: '#FF6B6B',
-                      background: 'linear-gradient(135deg, #FFE5E5 0%, #FFF0E5 100%)',
-                      padding: '2px 6px',
-                      borderRadius: '4px',
-                      fontWeight: '600',
-                      flexShrink: 0
-                    }}>当前</span>
-                  )}
                   <span className={`priority-badge ${getPriorityBadgeClass(task.priority)}`}>
                     {getPriorityLabel(task.priority)}
                   </span>
@@ -274,7 +321,7 @@ export default function TasksPage() {
                 className="task-actions"
                 style={{
                   position: 'absolute',
-                  right: '8px',
+                  right: '10px',
                   top: '50%',
                   transform: 'translateY(-50%)',
                   display: 'flex',
@@ -667,6 +714,29 @@ export default function TasksPage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Toast 提示 */}
+      {showToast && (
+        <div
+          className="toast fade-in"
+          style={{
+            position: 'fixed',
+            bottom: '30px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            background: 'rgba(0, 0, 0, 0.8)',
+            color: 'white',
+            padding: '12px 24px',
+            borderRadius: '8px',
+            fontSize: '14px',
+            fontWeight: '500',
+            zIndex: 2000,
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+          }}
+        >
+          {toastMessage}
         </div>
       )}
     </div>

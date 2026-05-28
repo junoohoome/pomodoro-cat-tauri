@@ -8,10 +8,10 @@ import { sendNotification } from "@tauri-apps/plugin-notification";
 
 const CAT_ICONS: Record<number, string> = {
   1: "🐱",
-  2: "😺",
+  2: "😿",
   3: "😸",
-  4: "😻",
-  5: "🐈",
+  4: "🙀",
+  5: "😾",
 };
 
 const CAT_STAGES = [
@@ -26,6 +26,7 @@ export default function TimerPage() {
   const {
     state,
     remainingSeconds,
+    totalSeconds,
     type,
     start,
     pause,
@@ -131,7 +132,6 @@ export default function TimerPage() {
   };
 
   const catEmoji = userData ? CAT_ICONS[userData.level] || CAT_ICONS[1] : CAT_ICONS[1];
-  const catStageName = userData ? CAT_STAGES.find(s => s.level === userData.level)?.name || CAT_STAGES[0].name : CAT_STAGES[0].name;
 
   const getPriorityBadgeClass = (priority: string) => {
     const classes = {
@@ -182,7 +182,6 @@ export default function TimerPage() {
           marginBottom: '8px',
           transition: 'transform 0.3s ease'
         }}>{catEmoji}</span>
-        <span className="cat-stage" style={{ fontSize: '14px', color: '#999' }}>{catStageName}</span>
       </div>
 
       {/* 圆形计时器 */}
@@ -191,26 +190,77 @@ export default function TimerPage() {
         width: '210px',
         height: '210px',
         marginBottom: '24px',
-        background: 'linear-gradient(135deg, #FFFFFF 0%, #FFF8F0 100%)',
-        borderRadius: '50%',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        boxShadow: '0 4px 16px rgba(255, 107, 107, 0.2)'
       }}>
-        <div className="timer-inner" style={{ textAlign: 'center' }}>
-          <span className="timer-time" style={{
-            fontSize: '48px',
-            fontWeight: '700',
-            color: '#FF6B6B',
-            lineHeight: '1',
-            display: 'block',
-            marginBottom: '8px',
-            letterSpacing: '0.05em'
-          }}>{formatTime(remainingSeconds)}</span>
-          <span className="timer-label" style={{ fontSize: '14px', color: '#999' }}>
-            {type === "focus" ? "专注" : "休息"}
-          </span>
+        {/* SVG 进度条 */}
+        <svg
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '210px',
+            height: '210px',
+            transform: 'rotate(-90deg)',
+            zIndex: 2,
+          }}
+          viewBox="0 0 210 210"
+        >
+          {/* 背景圆环 */}
+          <circle
+            cx="105"
+            cy="105"
+            r="100"
+            fill="none"
+            stroke="#FFECE0"
+            strokeWidth="3"
+            strokeLinecap="round"
+          />
+          {/* 进度圆环 */}
+          <circle
+            cx="105"
+            cy="105"
+            r="100"
+            fill="none"
+            stroke="#FF6B6B"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeDasharray={2 * Math.PI * 100}
+            strokeDashoffset={2 * Math.PI * 100 * (1 - remainingSeconds / totalSeconds)}
+            style={{
+              transition: state === 'running' ? 'stroke-dashoffset 1s linear' : 'stroke-dashoffset 0.3s ease',
+            }}
+          />
+        </svg>
+
+        {/* 计时器主体 */}
+        <div style={{
+          width: '200px',
+          height: '200px',
+          background: 'linear-gradient(135deg, #FFFFFF 0%, #FFF8F0 100%)',
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 4px 16px rgba(255, 107, 107, 0.2)',
+          position: 'relative',
+          zIndex: 1,
+        }}>
+          <div className="timer-inner" style={{ textAlign: 'center' }}>
+            <span className="timer-time" style={{
+              fontSize: '48px',
+              fontWeight: '700',
+              color: '#FF6B6B',
+              lineHeight: '1',
+              display: 'block',
+              marginBottom: '8px',
+              letterSpacing: '0.05em'
+            }}>{formatTime(remainingSeconds)}</span>
+            <span className="timer-label" style={{ fontSize: '14px', color: '#999' }}>
+              {type === "focus" ? "专注" : "休息"}
+            </span>
+          </div>
         </div>
       </div>
 

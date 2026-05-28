@@ -3,10 +3,10 @@ import { useUserStore } from "../stores/userStore";
 
 const CAT_ICONS: Record<number, string> = {
   1: "🐱",
-  2: "😺",
+  2: "😿",
   3: "😸",
-  4: "😻",
-  5: "🐈",
+  4: "🙀",
+  5: "😾",
 };
 
 const CAT_STAGES = [

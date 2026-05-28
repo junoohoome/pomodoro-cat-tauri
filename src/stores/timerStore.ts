@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { invoke } from "@tauri-apps/api/core";
+import { TrayIcon } from "@tauri-apps/api/tray";
 import { TimerState, PomodoroType } from "../types";
 
 // 格式化时间显示
@@ -9,7 +9,7 @@ function formatTime(seconds: number): string {
   return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
-// 更新菜单栏标题
+// 更新菜单栏标题（使用 Tauri 2 原生 API，性能最优）
 async function updateTrayTitle(state: TimerState, remainingSeconds: number, _type: PomodoroType) {
   try {
     let title = ""; // 默认为空（只显示 logo 图标）
@@ -19,10 +19,12 @@ async function updateTrayTitle(state: TimerState, remainingSeconds: number, _typ
       title = formatTime(remainingSeconds);
     }
 
-    await invoke("update_tray_title", { title });
+    // 直接更新 tray icon 的 title，不需要重新创建
+    const tray = await TrayIcon.getById("main-tray");
+    await tray?.setTitle(title);
   } catch (e) {
     // macOS only - ignore errors on other platforms
-    console.warn('Tray update failed:', e);
+    console.warn("Tray update failed:", e);
   }
 }
 
