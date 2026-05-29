@@ -73,7 +73,7 @@ export default function TimerPage() {
       try {
         // 方案1：尝试使用应用图标路径
         await sendNotification({
-          title: '🍅 专注完成！',
+          title: '专注完成！',
           body: '太棒了！休息一下吧~',
           sound: 'default',
         });
@@ -81,7 +81,7 @@ export default function TimerPage() {
       } catch (error) {
         console.error('❌ 通知发送失败:', error);
         // 备选方案：使用浏览器通知（可以自定义图标）
-        showBrowserNotification('🍅 专注完成！', '太棒了！休息一下吧~');
+        showBrowserNotification('专注完成！', '太棒了！休息一下吧~');
       }
 
       // 专注完成后，切换到休息类型但保持空闲状态，等待用户手动开始
@@ -90,7 +90,7 @@ export default function TimerPage() {
       // 休息完成通知（使用应用图标）
       try {
         await sendNotification({
-          title: '☕ 休息结束！',
+          title: '休息结束！',
           body: '准备开始新的专注吧~',
           sound: 'default',
         });
@@ -98,7 +98,7 @@ export default function TimerPage() {
       } catch (error) {
         console.error('❌ 通知发送失败:', error);
         // 备选方案：使用浏览器通知
-        showBrowserNotification('☕ 休息结束！', '准备开始新的专注吧~');
+        showBrowserNotification('休息结束！', '准备开始新的专注吧~');
       }
 
       stop();
