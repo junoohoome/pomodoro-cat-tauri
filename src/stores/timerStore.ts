@@ -44,8 +44,14 @@ interface TimerStore {
   targetEndTime: number | null;
   pausedRemainingSeconds: number | null;
 
+  completedPomodorosInSession: number;
+  storedFocusDuration: number;
+  storedBreakDuration: number;
+  storedLongBreakDuration: number;
+  storedAutoStart: boolean;
+
   // 操作
-  start: (focusDuration: number, breakDuration: number) => void;
+  start: (focusDuration: number, breakDuration: number, longBreakDuration?: number, autoStart?: boolean) => void;
   pause: () => void;
   resume: () => void;
   stop: () => void;
@@ -61,9 +67,8 @@ interface TimerStore {
 const TEST_FOCUS = 1; // 分钟
 const TEST_BREAK = 1; // 分钟
 
-// 正常模式时长
+// 正常模式时长（默认值，实际使用时从配置读取）
 const NORMAL_FOCUS = 25; // 分钟
-const NORMAL_BREAK = 5; // 分钟
 
 export const useTimerStore = create<TimerStore>((set, get) => ({
   state: "idle",
@@ -75,8 +80,13 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
   startTime: null,
   targetEndTime: null,
   pausedRemainingSeconds: null,
+  completedPomodorosInSession: 0,
+  storedFocusDuration: 25,
+  storedBreakDuration: 5,
+  storedLongBreakDuration: 15,
+  storedAutoStart: false,
 
-  start: (focusDuration: number, breakDuration: number) => {
+  start: (focusDuration: number, breakDuration: number, longBreakDuration: number = 15, autoStart: boolean = false) => {
     const { type } = get();
     const duration = type === "focus" ? focusDuration : breakDuration;
     const newSeconds = duration * 60;
@@ -91,6 +101,10 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       startTime: now,
       targetEndTime: targetEndTime,
       pausedRemainingSeconds: null,
+      storedFocusDuration: focusDuration,
+      storedBreakDuration: breakDuration,
+      storedLongBreakDuration: longBreakDuration,
+      storedAutoStart: autoStart,
     });
     updateTrayTitle("running", newSeconds, type);
   },
@@ -124,8 +138,8 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
   },
 
   stop: () => {
-    const { isTestMode } = get();
-    const initialSeconds = isTestMode ? TEST_FOCUS * 60 : NORMAL_FOCUS * 60;
+    const { isTestMode, storedFocusDuration } = get();
+    const initialSeconds = isTestMode ? TEST_FOCUS * 60 : storedFocusDuration * 60;
     set({
       state: "idle",
       remainingSeconds: initialSeconds,
@@ -134,13 +148,16 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       startTime: null,
       targetEndTime: null,
       pausedRemainingSeconds: null,
+      completedPomodorosInSession: 0,
     });
     updateTrayTitle("idle", initialSeconds, "focus");
   },
 
   switchToBreak: () => {
-    const { isTestMode } = get();
-    const breakSeconds = isTestMode ? TEST_BREAK * 60 : NORMAL_BREAK * 60;
+    const { isTestMode, storedBreakDuration, storedLongBreakDuration, completedPomodorosInSession } = get();
+    const isLongBreak = completedPomodorosInSession >= 4;
+    const breakMinutes = isLongBreak ? storedLongBreakDuration : storedBreakDuration;
+    const breakSeconds = isTestMode ? TEST_BREAK * 60 : breakMinutes * 60;
 
     const now = Date.now();
     const targetEndTime = now + (breakSeconds * 1000);
@@ -158,8 +175,10 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
   },
 
   prepareBreakMode: () => {
-    const { isTestMode } = get();
-    const breakSeconds = isTestMode ? TEST_BREAK * 60 : NORMAL_BREAK * 60;
+    const { isTestMode, storedBreakDuration, storedLongBreakDuration, completedPomodorosInSession } = get();
+    const isLongBreak = completedPomodorosInSession >= 4;
+    const breakMinutes = isLongBreak ? storedLongBreakDuration : storedBreakDuration;
+    const breakSeconds = isTestMode ? TEST_BREAK * 60 : breakMinutes * 60;
 
     set({
       state: "idle",
@@ -174,8 +193,9 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
   },
 
   switchToFocus: () => {
-    const { isTestMode } = get();
-    const focusSeconds = isTestMode ? TEST_FOCUS * 60 : NORMAL_FOCUS * 60;
+    const { isTestMode, storedFocusDuration, completedPomodorosInSession } = get();
+    const shouldReset = completedPomodorosInSession >= 4;
+    const focusSeconds = isTestMode ? TEST_FOCUS * 60 : storedFocusDuration * 60;
 
     set({
       state: "idle",
@@ -185,6 +205,7 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       startTime: null,
       targetEndTime: null,
       pausedRemainingSeconds: null,
+      ...(shouldReset ? { completedPomodorosInSession: 0 } : {}),
     });
     updateTrayTitle("idle", focusSeconds, "focus");
   },

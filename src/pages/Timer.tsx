@@ -30,7 +30,7 @@ export default function TimerPage() {
   } = useTimerStore();
 
   const { currentTask, fetchActiveTasks, incrementTaskProgress } = useTaskStore();
-  const { config, fetchConfig, userData } = useUserStore();
+  const { config, fetchConfig, userData, stats, fetchStats } = useUserStore();
   const { isTestMode } = useTestModeStore();
 
   // 测试模式下的时长：1分钟专注，1分钟休息
@@ -40,7 +40,8 @@ export default function TimerPage() {
   useEffect(() => {
     fetchConfig();
     fetchActiveTasks();
-  }, [fetchConfig, fetchActiveTasks]);
+    fetchStats();
+  }, [fetchConfig, fetchActiveTasks, fetchStats]);
 
   // 同步测试模式到 timerStore
   useEffect(() => {
@@ -55,7 +56,6 @@ export default function TimerPage() {
 
   const handleComplete = async () => {
     if (type === "focus") {
-      // 记录番茄钟时，使用配置的专注时长（忽略测试模式）
       const focusMinutes = config?.focusDuration || 25;
       await invoke("record_pomodoro", {
         record: {
@@ -69,39 +69,55 @@ export default function TimerPage() {
         await incrementTaskProgress(currentTask.id);
       }
 
-      // 发送系统通知（使用多种图标方案）
+      // Increment pomodoro session counter for long break tracking
+      useTimerStore.setState(s => ({ completedPomodorosInSession: s.completedPomodorosInSession + 1 }));
+
+      // Check daily goal
+      await fetchStats();
+      const todayCount = useUserStore.getState().stats?.todayCount || 0;
+      const dailyGoal = config?.dailyGoal || 8;
+
       try {
-        // 方案1：尝试使用应用图标路径
         await sendNotification({
           title: '专注完成！',
-          body: '太棒了！休息一下吧~',
+          body: todayCount >= dailyGoal
+            ? '目标达成！今天太棒了！'
+            : '太棒了！休息一下吧~',
           sound: 'default',
         });
-        console.log('✅ 通知已发送（使用应用图标）');
       } catch (error) {
-        console.error('❌ 通知发送失败:', error);
-        // 备选方案：使用浏览器通知（可以自定义图标）
-        showBrowserNotification('专注完成！', '太棒了！休息一下吧~');
+        console.error('通知发送失败:', error);
+        showBrowserNotification('专注完成！', todayCount >= dailyGoal ? '目标达成！' : '太棒了！休息一下吧~');
       }
 
-      // 专注完成后，切换到休息类型但保持空闲状态，等待用户手动开始
       prepareBreakMode();
+
+      // Auto-start break if enabled
+      if (config?.autoStart) {
+        const { storedFocusDuration, storedBreakDuration, storedLongBreakDuration, storedAutoStart, completedPomodorosInSession } = useTimerStore.getState();
+        const isLongBreak = completedPomodorosInSession >= 4;
+        const breakMins = isLongBreak ? storedLongBreakDuration : storedBreakDuration;
+        start(storedFocusDuration, breakMins, storedLongBreakDuration, storedAutoStart);
+      }
     } else {
-      // 休息完成通知（使用应用图标）
       try {
         await sendNotification({
           title: '休息结束！',
           body: '准备开始新的专注吧~',
           sound: 'default',
         });
-        console.log('✅ 通知已发送（使用应用图标）');
       } catch (error) {
-        console.error('❌ 通知发送失败:', error);
-        // 备选方案：使用浏览器通知
+        console.error('通知发送失败:', error);
         showBrowserNotification('休息结束！', '准备开始新的专注吧~');
       }
 
       stop();
+
+      // Auto-start next focus if enabled
+      if (config?.autoStart) {
+        const { storedFocusDuration, storedBreakDuration, storedLongBreakDuration, storedAutoStart } = useTimerStore.getState();
+        start(storedFocusDuration, storedBreakDuration, storedLongBreakDuration, storedAutoStart);
+      }
     }
   };
 
@@ -143,6 +159,8 @@ export default function TimerPage() {
   // 根据测试模式选择时长
   const focusDuration = isTestMode ? TEST_FOCUS_DURATION : (config?.focusDuration || 25);
   const breakDuration = isTestMode ? TEST_BREAK_DURATION : (config?.breakDuration || 5);
+  const longBreakDuration = isTestMode ? TEST_BREAK_DURATION : (config?.longBreakDuration || 15);
+  const autoStart = config?.autoStart || false;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
@@ -268,7 +286,7 @@ export default function TimerPage() {
       }}>
         {state === "idle" && type === "focus" && (
           <button
-            onClick={() => start(focusDuration, breakDuration)}
+            onClick={() => start(focusDuration, breakDuration, longBreakDuration, autoStart)}
             className="btn btn-primary"
             style={{
               minWidth: '80px',
@@ -283,7 +301,7 @@ export default function TimerPage() {
         {state === "idle" && type === "break" && (
           <>
             <button
-              onClick={() => start(focusDuration, breakDuration)}
+              onClick={() => start(focusDuration, breakDuration, longBreakDuration, autoStart)}
               className="btn btn-primary"
               style={{
                 minWidth: '80px',
@@ -376,6 +394,50 @@ export default function TimerPage() {
             lineHeight: '1.45',
             wordBreak: 'break-word'
           }}>{currentTask.name}</span>
+        </div>
+      )}
+
+      {/* 每日目标进度 */}
+      {config && stats && (
+        <div style={{
+          width: '100%',
+          marginTop: '16px',
+          padding: '12px 16px',
+          background: 'linear-gradient(135deg, #FFFFFF 0%, #FFF8F0 100%)',
+          borderRadius: '9px',
+          border: '1px solid #FFECE0',
+          boxShadow: '0 4px 12px rgba(255, 107, 107, 0.14)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}>
+          <span style={{ fontSize: '13px', color: '#666' }}>今日目标</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{
+              width: '120px',
+              height: '6px',
+              background: '#F0F0F0',
+              borderRadius: '3px',
+              overflow: 'hidden',
+            }}>
+              <div style={{
+                width: `${Math.min(100, (stats.todayCount / (config.dailyGoal || 8)) * 100)}%`,
+                height: '100%',
+                background: stats.todayCount >= (config.dailyGoal || 8)
+                  ? 'linear-gradient(90deg, #4CAF50, #66BB6A)'
+                  : 'linear-gradient(90deg, #FF6B6B, #FFA94D)',
+                borderRadius: '3px',
+                transition: 'width 0.5s ease',
+              }} />
+            </div>
+            <span style={{
+              fontSize: '13px',
+              fontWeight: '600',
+              color: stats.todayCount >= (config.dailyGoal || 8) ? '#4CAF50' : '#FF6B6B',
+            }}>
+              {stats.todayCount}/{config.dailyGoal || 8}
+            </span>
+          </div>
         </div>
       )}
     </div>
