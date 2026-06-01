@@ -171,7 +171,12 @@ pub fn get_user_config(app: AppHandle) -> Result<UserConfig, String> {
 
     let config = conn.query_row(
         "SELECT id, focus_duration, break_duration, enable_notifications,
-         enable_sound, theme, updated_at FROM user_config WHERE id = 1",
+         enable_sound, theme, updated_at,
+         COALESCE(long_break_duration, 15),
+         COALESCE(auto_start, 0),
+         COALESCE(daily_goal, 8),
+         COALESCE(auto_launch, 0)
+         FROM user_config WHERE id = 1",
         [],
         |row| Ok(UserConfig {
             id: row.get(0)?,
@@ -181,6 +186,10 @@ pub fn get_user_config(app: AppHandle) -> Result<UserConfig, String> {
             enable_sound: row.get(4)?,
             theme: row.get(5)?,
             updated_at: row.get(6)?,
+            long_break_duration: row.get(7)?,
+            auto_start: row.get(8)?,
+            daily_goal: row.get(9)?,
+            auto_launch: row.get(10)?,
         }),
     ).map_err(|e| e.to_string())?;
 
@@ -196,6 +205,10 @@ pub fn update_user_config(
     enable_notifications: Option<bool>,
     enable_sound: Option<bool>,
     theme: Option<String>,
+    long_break_duration: Option<i32>,
+    auto_start: Option<bool>,
+    daily_goal: Option<i32>,
+    auto_launch: Option<bool>,
 ) -> Result<UserConfig, String> {
     {
         let db_guard = app.state::<DbConnection>();
@@ -223,6 +236,22 @@ pub fn update_user_config(
         if let Some(t) = &theme {
             set_parts.push("theme = ?");
             params.push(t.clone());
+        }
+        if let Some(d) = long_break_duration {
+            set_parts.push("long_break_duration = ?");
+            params.push(d.to_string());
+        }
+        if let Some(a) = auto_start {
+            set_parts.push("auto_start = ?");
+            params.push(if a { "1".to_string() } else { "0".to_string() });
+        }
+        if let Some(g) = daily_goal {
+            set_parts.push("daily_goal = ?");
+            params.push(g.to_string());
+        }
+        if let Some(a) = auto_launch {
+            set_parts.push("auto_launch = ?");
+            params.push(if a { "1".to_string() } else { "0".to_string() });
         }
         set_parts.push("updated_at = datetime('now')");
 

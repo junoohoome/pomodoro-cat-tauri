@@ -79,6 +79,12 @@ pub fn init_db(conn: &Connection) -> SqliteResult<()> {
         [],
     )?;
 
+    // 迁移：添加新配置字段（忽略已存在的列）
+    let _ = conn.execute("ALTER TABLE user_config ADD COLUMN long_break_duration INTEGER NOT NULL DEFAULT 15", []);
+    let _ = conn.execute("ALTER TABLE user_config ADD COLUMN auto_start INTEGER NOT NULL DEFAULT 0", []);
+    let _ = conn.execute("ALTER TABLE user_config ADD COLUMN daily_goal INTEGER NOT NULL DEFAULT 8", []);
+    let _ = conn.execute("ALTER TABLE user_config ADD COLUMN auto_launch INTEGER NOT NULL DEFAULT 0", []);
+
     Ok(())
 }
 
@@ -132,6 +138,10 @@ pub struct UserConfig {
     pub enable_sound: bool,
     pub theme: String,
     pub updated_at: String,
+    pub long_break_duration: i32,
+    pub auto_start: bool,
+    pub daily_goal: i32,
+    pub auto_launch: bool,
 }
 
 // 番茄钟记录
