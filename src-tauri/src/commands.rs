@@ -884,3 +884,106 @@ fn default_pet_position(app: &AppHandle) -> Result<tauri::PhysicalPosition<i32>,
         max_y.max(origin.y + PET_WINDOW_MARGIN),
     ))
 }
+
+// 惰性新陈代谢计算：根据时间差扣除重量
+fn compute_metabolism(conn: &rusqlite::Connection) -> Result<CatState, String> {
+    let state: CatState = conn.query_row(
+        "SELECT weight, food_inventory, last_fed_at, last_metabolism_at FROM cat_state WHERE id = 1",
+        [],
+        |row| Ok(CatState {
+            weight: row.get(0)?,
+            food_inventory: row.get(1)?,
+            last_fed_at: row.get(2)?,
+            last_metabolism_at: row.get(3)?,
+        }),
+    ).map_err(|e| e.to_string())?;
+
+    // 计算时间差（小时）
+    let last_time = chrono::NaiveDateTime::parse_from_str(&state.last_metabolism_at, "%Y-%m-%d %H:%M:%S")
+        .map_err(|e| format!("Parse last_metabolism_at error: {}", e))?;
+    let now = chrono::Local::now().naive_utc();
+    let hours_diff = (now - last_time).num_seconds() as f64 / 3600.0;
+
+    if hours_diff > 0.0 {
+        // 每天消耗 0.3kg = 每小时 0.3/24 = 0.0125kg
+        let consumption = hours_diff * (0.3 / 24.0);
+        let new_weight = (state.weight - consumption).max(1.0);
+
+        conn.execute(
+            "UPDATE cat_state SET weight = ?, last_metabolism_at = datetime('now') WHERE id = 1",
+            params![new_weight],
+        ).map_err(|e| e.to_string())?;
+
+        Ok(CatState {
+            weight: new_weight,
+            food_inventory: state.food_inventory,
+            last_fed_at: state.last_fed_at,
+            last_metabolism_at: chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
+        })
+    } else {
+        Ok(state)
+    }
+}
+
+// 获取猫咪状态
+#[tauri::command]
+pub fn get_cat_state(app: AppHandle) -> Result<CatState, String> {
+    let db_guard = app.state::<DbConnection>();
+    let conn = db_guard.0.lock().map_err(|e| format!("Failed to acquire lock: {}", e))?;
+    compute_metabolism(&conn)
+}
+
+// 喂食猫咪
+#[tauri::command]
+pub fn feed_cat(app: AppHandle) -> Result<CatState, String> {
+    let db_guard = app.state::<DbConnection>();
+    let conn = db_guard.0.lock().map_err(|e| format!("Failed to acquire lock: {}", e))?;
+
+    // 先计算新陈代谢
+    let current = compute_metabolism(&conn)?;
+
+    if current.food_inventory <= 0 {
+        return Err("没有罐头了".to_string());
+    }
+    if current.weight >= 10.0 {
+        return Err("猫咪已经太胖了，不能再喂了".to_string());
+    }
+
+    let new_weight = (current.weight + 0.3).min(10.0);
+    let new_inventory = current.food_inventory - 1;
+    let now = chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
+
+    conn.execute(
+        "UPDATE cat_state SET weight = ?, food_inventory = ?, last_fed_at = ? WHERE id = 1",
+        params![new_weight, new_inventory, now],
+    ).map_err(|e| e.to_string())?;
+
+    Ok(CatState {
+        weight: new_weight,
+        food_inventory: new_inventory,
+        last_fed_at: now,
+        last_metabolism_at: current.last_metabolism_at,
+    })
+}
+
+// 添加食物（番茄钟完成时调用）
+#[tauri::command]
+pub fn add_food(app: AppHandle) -> Result<CatState, String> {
+    let db_guard = app.state::<DbConnection>();
+    let conn = db_guard.0.lock().map_err(|e| format!("Failed to acquire lock: {}", e))?;
+
+    // 先计算新陈代谢
+    let current = compute_metabolism(&conn)?;
+
+    conn.execute(
+        "UPDATE cat_state SET food_inventory = food_inventory + 1 WHERE id = 1",
+        [],
+    ).map_err(|e| e.to_string())?;
+
+    Ok(CatState {
+        weight: current.weight,
+        food_inventory: current.food_inventory + 1,
+        last_fed_at: current.last_fed_at,
+        last_metabolism_at: current.last_metabolism_at,
+    })
+}
