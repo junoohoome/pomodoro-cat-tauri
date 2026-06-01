@@ -42,7 +42,7 @@ export default function TimerPage() {
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const catMood = state === "running" ? "running" : state === "paused" ? "paused" : state === "break" ? "break" : "idle";
+  const catMood = state === "running" && type === "break" ? "break" : state === "running" ? "running" : state === "paused" ? "paused" : "idle";
 
   const getPriorityBadgeClass = (priority: string) => {
     const classes = {
