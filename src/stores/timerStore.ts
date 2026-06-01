@@ -1,42 +1,17 @@
 import { create } from "zustand";
-import { TrayIcon } from "@tauri-apps/api/tray";
 import { emit } from "@tauri-apps/api/event";
 import { TimerState, PomodoroType } from "../types";
 
-// 格式化时间显示
-function formatTime(seconds: number): string {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-}
+// 菜单栏标题更新已移除（不再显示计时）
 
-// 更新菜单栏标题（使用 Tauri 2 原生 API，性能最优）
-async function updateTrayTitle(state: TimerState, remainingSeconds: number, _type: PomodoroType) {
-  try {
-    let title = ""; // 默认为空（只显示 logo 图标）
-
-    if (state === "running" || state === "paused") {
-      // 只显示时间，不显示 emoji
-      title = formatTime(remainingSeconds);
-    }
-
-    // 直接更新 tray icon 的 title，不需要重新创建
-    const tray = await TrayIcon.getById("main-tray");
-    await tray?.setTitle(title);
-  } catch (e) {
-    // macOS only - ignore errors on other platforms
-    console.warn("Tray update failed:", e);
-  }
-}
-
-// 向宠物窗口发送计时器状态
-async function emitTimerState(state: TimerState, type: PomodoroType) {
+// 向宠物窗口发送计时器状态（包含 targetEndTime，宠物窗口可自行倒计时）
+async function emitTimerState(state: TimerState, type: PomodoroType, targetEndTime: number | null = null) {
   try {
     let petState: string = state;
     if (state === "running" && type === "break") {
       petState = "break";
     }
-    await emit("timer-state", { state: petState });
+    await emit("timer-state", { state: petState, targetEndTime });
   } catch {
     // Pet window may not exist
   }
@@ -128,8 +103,8 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       storedLongBreakDuration: longBreakDuration,
       storedAutoStart: autoStart,
     });
-    updateTrayTitle("running", newSeconds, type);
-    emitTimerState("running", type);
+
+    emitTimerState("running", type, targetEndTime);
     emitTimerTick(newSeconds);
   },
 
@@ -141,8 +116,8 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       startTime: null,
       targetEndTime: null,
     });
-    updateTrayTitle("paused", remainingSeconds, type);
-    emitTimerState("paused", type);
+
+    emitTimerState("paused", type, null);
   },
 
   resume: () => {
@@ -159,8 +134,8 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       targetEndTime: targetEndTime,
       pausedRemainingSeconds: null,
     });
-    updateTrayTitle("running", pausedRemainingSeconds, type);
-    emitTimerState("running", type);
+
+    emitTimerState("running", type, targetEndTime);
     emitTimerTick(pausedRemainingSeconds);
   },
 
@@ -177,8 +152,8 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       pausedRemainingSeconds: null,
       completedPomodorosInSession: 0,
     });
-    updateTrayTitle("idle", initialSeconds, "focus");
-    emitTimerState("idle", "focus");
+
+    emitTimerState("idle", "focus", null);
   },
 
   switchToBreak: () => {
@@ -199,8 +174,8 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       targetEndTime: targetEndTime,
       pausedRemainingSeconds: null,
     });
-    updateTrayTitle("running", breakSeconds, "break");
-    emitTimerState("running", "break");
+
+    emitTimerState("running", "break", targetEndTime);
     emitTimerTick(breakSeconds);
   },
 
@@ -219,8 +194,8 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       targetEndTime: null,
       pausedRemainingSeconds: null,
     });
-    updateTrayTitle("idle", breakSeconds, "break");
-    emitTimerState("idle", "break");
+
+    emitTimerState("idle", "break", null);
   },
 
   switchToFocus: () => {
@@ -238,8 +213,8 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       pausedRemainingSeconds: null,
       ...(shouldReset ? { completedPomodorosInSession: 0 } : {}),
     });
-    updateTrayTitle("idle", focusSeconds, "focus");
-    emitTimerState("idle", "focus");
+
+    emitTimerState("idle", "focus", null);
   },
 
   setTaskId: (taskId: number | undefined) => {
@@ -252,9 +227,12 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       const now = Date.now();
       const remaining = Math.max(0, Math.floor((targetEndTime - now) / 1000));
       set({ remainingSeconds: remaining });
-      // 每秒更新菜单栏
-      updateTrayTitle("running", remaining, type);
       emitTimerTick(remaining);
+
+      // 计时归零 → 触发完成事件（全局，不依赖页面组件）
+      if (remaining === 0) {
+        emit("timer-complete", { type });
+      }
     }
   },
 
@@ -272,7 +250,7 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       targetEndTime: null,
       pausedRemainingSeconds: null,
     });
-    updateTrayTitle("idle", initialSeconds, "focus");
+
     emitTimerState("idle", "focus");
   },
 }));

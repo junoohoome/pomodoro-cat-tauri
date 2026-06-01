@@ -9,6 +9,11 @@ import "./styles.css";
 
 type PetState = "idle" | "running" | "paused" | "break";
 
+interface PetNotification {
+  title: string;
+  body: string;
+}
+
 function formatTime(seconds: number): string {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
@@ -18,32 +23,68 @@ function formatTime(seconds: number): string {
 export default function PetWindow() {
   const [state, setState] = useState<PetState>("idle");
   const [remaining, setRemaining] = useState(0);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [notification, setNotification] = useState<PetNotification | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const targetEndTimeRef = useRef<number | null>(null);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Listen for timer events from main window
   useEffect(() => {
-    const unlistenState = listen<{ state: PetState }>("timer-state", (event) => {
+    const unlistenState = listen<{ state: PetState; targetEndTime: number | null }>("timer-state", (event) => {
       setState(event.payload.state);
+      targetEndTimeRef.current = event.payload.targetEndTime;
+      // 收到状态变更时立即同步一次剩余时间
+      if (event.payload.targetEndTime) {
+        const remaining = Math.max(0, Math.floor((event.payload.targetEndTime - Date.now()) / 1000));
+        setRemaining(remaining);
+      }
     });
 
     const unlistenTick = listen<{ remaining: number }>("timer-tick", (event) => {
       setRemaining(event.payload.remaining);
     });
 
+    const unlistenNotification = listen<PetNotification>("pet-notification", (event) => {
+      // 清除上一个定时器
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+      setNotification(event.payload);
+      // 3秒后自动消失
+      timerRef.current = setTimeout(() => setNotification(null), 3000);
+    });
+
     return () => {
       unlistenState.then((fn) => fn());
       unlistenTick.then((fn) => fn());
+      unlistenNotification.then((fn) => fn());
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
     };
   }, []);
 
-  // Click-through: ignore cursor events when mouse is outside the cat area
-  const handleMouseEnter = useCallback(async () => {
-    await getCurrentWindow().setIgnoreCursorEvents(false);
-  }, []);
+  // 本地倒计时：宠物窗口自行计算剩余时间，不依赖主窗口 tick
+  useEffect(() => {
+    if (countdownRef.current) {
+      clearInterval(countdownRef.current);
+      countdownRef.current = null;
+    }
 
-  const handleMouseLeave = useCallback(async () => {
-    await getCurrentWindow().setIgnoreCursorEvents(true);
-  }, []);
+    if (state === "running" && targetEndTimeRef.current) {
+      countdownRef.current = setInterval(() => {
+        const remaining = Math.max(0, Math.floor((targetEndTimeRef.current! - Date.now()) / 1000));
+        setRemaining(remaining);
+      }, 1000);
+    }
+
+    return () => {
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+        countdownRef.current = null;
+      }
+    };
+  }, [state]);
 
   // Click cat → focus main window
   const handleClick = useCallback(async () => {
@@ -84,14 +125,18 @@ export default function PetWindow() {
 
   return (
     <div
-      ref={containerRef}
       className="pet-container"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
       onClick={handleClick}
     >
+      {/* 气泡通知 - 猫咪头顶 */}
+      {notification && (
+        <div className="pet-bubble">
+          <div className="pet-bubble-title">{notification.title}</div>
+          <div className="pet-bubble-body">{notification.body}</div>
+        </div>
+      )}
       {renderCat()}
       {showTimer && <span className="pet-timer">{formatTime(remaining)}</span>}
     </div>

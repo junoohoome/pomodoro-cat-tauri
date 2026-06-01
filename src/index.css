@@ -11,29 +11,66 @@
   box-sizing: border-box;
 }
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
-  background: linear-gradient(135deg, #FFF8F0 0%, #FFE8D6 100%);
-  color: #2C2C2C;
-  min-height: 100vh;
-}
-
 /* 原版颜色变量 */
 :root {
   --primary-color: #FF6B6B;
   --secondary-color: #FFA94D;
+  --primary-gradient: linear-gradient(135deg, #FF6B6B 0%, #FFA94D 100%);
+  --app-bg: linear-gradient(135deg, #FFF8F0 0%, #FFE8D6 100%);
+  --surface-bg: linear-gradient(135deg, #FFFFFF 0%, #FFF8F0 100%);
+  --card-gradient: linear-gradient(135deg, #FFFFFF 0%, #FFF8F0 100%);
+  --active-bg: linear-gradient(135deg, #FFE5E5 0%, #FFF0E5 100%);
   --bg-color: #FFF8F0;
   --text-color: #2C2C2C;
+  --muted-color: #666666;
+  --subtle-color: #999999;
+  --input-bg: #F8F8F8;
+  --input-border: #E0E0E0;
+  --toggle-off-bg: #E0E0E0;
   --success-color: #51CF66;
   --card-bg: #FFFFFF;
+  --switch-knob-bg: #FFFFFF;
   --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   --card-shadow: 0 8px 24px rgba(255, 107, 107, 0.12);
+  --sidebar-shadow: 4px 0 12px rgba(255, 107, 107, 0.08);
   --border-color: #FFECE0;
+}
+
+html[data-theme="dark"] {
+  --primary-color: #FF8A8A;
+  --secondary-color: #FFB865;
+  --primary-gradient: linear-gradient(135deg, #FF7A7A 0%, #FFB05C 100%);
+  --app-bg: linear-gradient(135deg, #18110F 0%, #281914 100%);
+  --surface-bg: linear-gradient(135deg, #241917 0%, #1B1412 100%);
+  --card-gradient: linear-gradient(135deg, #2B1F1C 0%, #211815 100%);
+  --active-bg: linear-gradient(135deg, rgba(255, 107, 107, 0.22) 0%, rgba(255, 169, 77, 0.16) 100%);
+  --bg-color: #18110F;
+  --text-color: #F6EDEA;
+  --muted-color: #D8C5BE;
+  --subtle-color: #A9968F;
+  --input-bg: #171110;
+  --input-border: #4A342D;
+  --toggle-off-bg: #4A342D;
+  --success-color: #72D987;
+  --card-bg: #241917;
+  --switch-knob-bg: #FFF6F2;
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.28);
+  --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  --sidebar-shadow: 4px 0 16px rgba(0, 0, 0, 0.24);
+  --border-color: #3A2823;
+  color-scheme: dark;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  background: var(--app-bg);
+  color: var(--text-color);
+  min-height: 100vh;
 }
 
 /* 卡片样式 */
 .card {
-  background: linear-gradient(135deg, #FFFFFF 0%, #FFF8F0 100%);
+  background: var(--card-gradient);
   border-radius: 12px;
   padding: 16px;
   box-shadow: var(--card-shadow);
@@ -59,7 +96,7 @@ body {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #FF7A7A 0%, #FF9C8F 100%);
+  background: var(--primary-gradient);
   color: white;
   box-shadow: 0 5px 13px rgba(255, 107, 107, 0.24);
 }
@@ -71,9 +108,9 @@ body {
 }
 
 .btn-outline {
-  background: linear-gradient(135deg, #FFFFFF 0%, #FFF8F0 100%);
+  background: var(--surface-bg);
   border: 1px solid #FFCEC5;
-  color: #FF6B6B;
+  color: var(--primary-color);
   box-shadow: 0 4px 10px rgba(255, 107, 107, 0.16);
 }
 
@@ -109,14 +146,14 @@ body {
 /* 进度条 */
 .progress-bar {
   height: 8px;
-  background: #f0f0f0;
+  background: var(--input-border);
   border-radius: 4px;
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #FF6B6B 0%, #FFA94D 100%);
+  background: var(--primary-gradient);
   border-radius: 4px;
   transition: width 0.3s ease;
 }
@@ -131,11 +168,11 @@ body {
 }
 
 .text-gray {
-  color: #999;
+  color: var(--subtle-color);
 }
 
 .text-muted {
-  color: #666;
+  color: var(--muted-color);
 }
 
 /* 自定义滚动条 */

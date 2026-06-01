@@ -1,16 +1,15 @@
 import { useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { save, open } from "@tauri-apps/plugin-dialog";
 import { useUserStore } from "../stores/userStore";
 import { useTestModeStore } from "../stores/testModeStore";
 
 const cardStyle: React.CSSProperties = {
-  background: 'linear-gradient(135deg, #FFFFFF 0%, #FFF8F0 100%)',
+  background: 'var(--card-gradient)',
   borderRadius: '12px',
   padding: '20px',
   marginBottom: '16px',
-  boxShadow: '0 4px 12px rgba(255, 107, 107, 0.12)',
-  border: '1px solid #FFECE0',
+  boxShadow: 'var(--card-shadow)',
+  border: '1px solid var(--border-color)',
 };
 
 function ToggleSwitch({ enabled, onChange }: { enabled: boolean; onChange: () => void }) {
@@ -22,7 +21,7 @@ function ToggleSwitch({ enabled, onChange }: { enabled: boolean; onChange: () =>
         width: '56px',
         height: '30px',
         borderRadius: '15px',
-        background: enabled ? 'linear-gradient(135deg, #FF6B6B 0%, #FFA94D 100%)' : '#E0E0E0',
+        background: enabled ? 'var(--primary-gradient)' : 'var(--toggle-off-bg)',
         transition: 'all 0.3s ease',
         cursor: 'pointer',
         border: 'none',
@@ -37,7 +36,7 @@ function ToggleSwitch({ enabled, onChange }: { enabled: boolean; onChange: () =>
         width: '24px',
         height: '24px',
         borderRadius: '50%',
-        background: '#FFFFFF',
+        background: 'var(--switch-knob-bg)',
         boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
         transition: 'all 0.3s ease',
       }} />
@@ -52,8 +51,8 @@ function NumberInput({ label, hint, value, min, max, unit, onChange }: {
   return (
     <div style={{ marginBottom: '20px' }}>
       <div style={{ marginBottom: '8px' }}>
-        <span style={{ fontSize: '14px', color: '#2C2C2C', fontWeight: '500' }}>{label}</span>
-        <span style={{ fontSize: '12px', color: '#999', marginLeft: '8px' }}>{hint}</span>
+        <span style={{ fontSize: '14px', color: 'var(--text-color)', fontWeight: '500' }}>{label}</span>
+        <span style={{ fontSize: '12px', color: 'var(--subtle-color)', marginLeft: '8px' }}>{hint}</span>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         <input
@@ -66,13 +65,13 @@ function NumberInput({ label, hint, value, min, max, unit, onChange }: {
             width: '80px',
             padding: '8px 12px',
             fontSize: '14px',
-            border: '1px solid #E0E0E0',
+            border: '1px solid var(--input-border)',
             borderRadius: '8px',
-            background: '#F8F8F8',
-            color: '#2C2C2C',
+            background: 'var(--input-bg)',
+            color: 'var(--text-color)',
           }}
         />
-        <span style={{ fontSize: '14px', color: '#666' }}>{unit}</span>
+        <span style={{ fontSize: '14px', color: 'var(--muted-color)' }}>{unit}</span>
       </div>
     </div>
   );
@@ -84,8 +83,8 @@ function ToggleRow({ label, hint, enabled, onChange }: {
   return (
     <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
       <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: '14px', color: '#2C2C2C', marginBottom: '4px' }}>{label}</div>
-        {hint && <div style={{ fontSize: '12px', color: '#999' }}>{hint}</div>}
+        <div style={{ fontSize: '14px', color: 'var(--text-color)', marginBottom: '4px' }}>{label}</div>
+        {hint && <div style={{ fontSize: '12px', color: 'var(--subtle-color)' }}>{hint}</div>}
       </div>
       <ToggleSwitch enabled={enabled} onChange={onChange} />
     </div>
@@ -96,21 +95,14 @@ function SectionHeader({ emoji, title }: { emoji: string; title: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
       <span style={{ fontSize: '20px' }}>{emoji}</span>
-      <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#2C2C2C', margin: 0 }}>{title}</h3>
+      <h3 style={{ fontSize: '16px', fontWeight: '600', color: 'var(--text-color)', margin: 0 }}>{title}</h3>
     </div>
   );
 }
 
 export default function SettingsPage() {
-  const { config, fetchConfig, updateConfig, exportData, importData, toggleAutoLaunch } = useUserStore();
+  const { config, fetchConfig, updateConfig, toggleAutoLaunch, resetConfig } = useUserStore();
   const { isTestMode, setIsTestMode } = useTestModeStore();
-
-  const handleClearData = async () => {
-    if (confirm("确定要清除所有番茄钟记录吗？此操作不可恢复。")) {
-      await invoke("clear_pomodoro_records");
-      window.location.reload();
-    }
-  };
 
   useEffect(() => {
     fetchConfig();
@@ -119,7 +111,7 @@ export default function SettingsPage() {
   if (!config) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
-        <span style={{ color: '#999' }}>加载中...</span>
+        <span style={{ color: 'var(--subtle-color)' }}>加载中...</span>
       </div>
     );
   }
@@ -127,8 +119,8 @@ export default function SettingsPage() {
   return (
     <div style={{ paddingBottom: '24px' }}>
       <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#2C2C2C', marginBottom: '8px' }}>设置</h1>
-        <p style={{ fontSize: '14px', color: '#999' }}>自定义你的番茄钟体验</p>
+        <h1 style={{ fontSize: '28px', fontWeight: '700', color: 'var(--text-color)', marginBottom: '8px' }}>设置</h1>
+        <p style={{ fontSize: '14px', color: 'var(--subtle-color)' }}>自定义你的番茄钟体验</p>
       </div>
 
       {/* 计时器 */}
@@ -149,8 +141,16 @@ export default function SettingsPage() {
       {/* 每日目标 */}
       <div className="card" style={cardStyle}>
         <SectionHeader emoji="🎯" title="每日目标" />
-        <NumberInput label="每日番茄目标" hint="每天计划完成的番茄数" value={config.dailyGoal} min={1} max={30} unit="个"
-          onChange={(v) => updateConfig({ dailyGoal: v })} />
+        <div style={{ marginBottom: '20px' }}>
+          <ToggleRow label="显示每日目标" hint="在主页显示今日目标进度条" enabled={config.showDailyGoal}
+            onChange={() => updateConfig({ showDailyGoal: !config.showDailyGoal })} />
+        </div>
+        {config.showDailyGoal && (
+          <div style={{ marginBottom: 0 }}>
+            <NumberInput label="每日番茄目标" hint="每天计划完成的番茄数" value={config.dailyGoal} min={1} max={30} unit="个"
+              onChange={(v) => updateConfig({ dailyGoal: v })} />
+          </div>
+        )}
       </div>
 
       {/* 通知与提醒 */}
@@ -166,38 +166,44 @@ export default function SettingsPage() {
 
       {/* 桌面宠物 */}
       <div className="card" style={{
-        background: 'linear-gradient(135deg, #FFFFFF 0%, #FFF8F0 100%)',
+        background: 'var(--card-gradient)',
         borderRadius: '12px',
         padding: '20px',
         marginBottom: '16px',
-        boxShadow: '0 4px 12px rgba(255, 107, 107, 0.12)',
-        border: '1px solid #FFECE0'
+        boxShadow: 'var(--card-shadow)',
+        border: '1px solid var(--border-color)'
       }}>
         <div style={{ marginBottom: '20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
             <span style={{ fontSize: '20px' }}>🐱</span>
-            <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#2C2C2C', margin: 0 }}>桌面宠物</h3>
+            <h3 style={{ fontSize: '16px', fontWeight: '600', color: 'var(--text-color)', margin: 0 }}>桌面宠物</h3>
           </div>
-          <p style={{ fontSize: '13px', color: '#666', margin: 0 }}>在桌面上显示一只小猫咪，跟随番茄钟状态变化</p>
+          <p style={{ fontSize: '13px', color: 'var(--muted-color)', margin: 0 }}>在桌面上显示一只小猫咪，跟随番茄钟状态变化</p>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <div style={{ fontSize: '14px', color: '#2C2C2C', marginBottom: '4px' }}>显示桌面宠物</div>
-            <div style={{ fontSize: '12px', color: '#999' }}>快捷键 Cmd+Shift+P 切换</div>
+            <div style={{ fontSize: '14px', color: 'var(--text-color)', marginBottom: '4px' }}>显示桌面宠物</div>
+            <div style={{ fontSize: '12px', color: 'var(--subtle-color)' }}>快捷键 Cmd+Shift+P 切换</div>
           </div>
           <button
             onClick={async () => {
               const newValue = !config.showDesktopPet;
-              await updateConfig({ showDesktopPet: newValue });
-              await invoke("toggle_pet_window", { show: newValue });
+              const previousValue = config.showDesktopPet;
+              try {
+                await updateConfig({ showDesktopPet: newValue });
+                await invoke("toggle_pet_window", { show: newValue });
+              } catch (e) {
+                await updateConfig({ showDesktopPet: previousValue });
+                alert(`桌面宠物切换失败：${String(e)}`);
+              }
             }}
             style={{
               position: 'relative',
               width: '56px',
               height: '30px',
               borderRadius: '15px',
-              background: config.showDesktopPet ? 'linear-gradient(135deg, #FF6B6B 0%, #FFA94D 100%)' : '#E0E0E0',
+              background: config.showDesktopPet ? 'var(--primary-gradient)' : 'var(--toggle-off-bg)',
               transition: 'all 0.3s ease',
               cursor: 'pointer',
               border: 'none',
@@ -211,7 +217,7 @@ export default function SettingsPage() {
               width: '24px',
               height: '24px',
               borderRadius: '50%',
-              background: '#FFFFFF',
+              background: 'var(--switch-knob-bg)',
               boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
               transition: 'all 0.3s ease'
             }}></span>
@@ -234,8 +240,8 @@ export default function SettingsPage() {
               style={{
                 padding: '16px 12px',
                 borderRadius: '10px',
-                border: config.theme === theme.value ? '2px solid #FF6B6B' : '1px solid #E0E0E0',
-                background: config.theme === theme.value ? 'linear-gradient(135deg, #FFE5E5 0%, #FFF0E5 100%)' : '#FFFFFF',
+                border: config.theme === theme.value ? '2px solid var(--primary-color)' : '1px solid var(--input-border)',
+                background: config.theme === theme.value ? 'var(--active-bg)' : 'var(--card-bg)',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
@@ -245,75 +251,10 @@ export default function SettingsPage() {
               }}
             >
               <span style={{ fontSize: '28px' }}>{theme.icon}</span>
-              <span style={{ fontSize: '13px', fontWeight: '500', color: '#2C2C2C' }}>{theme.label}</span>
-              <span style={{ fontSize: '11px', color: '#999' }}>{theme.desc}</span>
+              <span style={{ fontSize: '13px', fontWeight: '500', color: 'var(--text-color)' }}>{theme.label}</span>
+              <span style={{ fontSize: '11px', color: 'var(--subtle-color)' }}>{theme.desc}</span>
             </button>
           ))}
-        </div>
-      </div>
-
-      {/* 数据管理 */}
-      <div className="card" style={cardStyle}>
-        <SectionHeader emoji="💾" title="数据管理" />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <button
-            onClick={async () => {
-              const path = await save({
-                defaultPath: `pomodoro-cat-backup-${new Date().toISOString().split('T')[0]}.json`,
-                filters: [{ name: 'JSON', extensions: ['json'] }],
-              });
-              if (path) {
-                try {
-                  await exportData(path);
-                  alert('数据导出成功！');
-                } catch (e) {
-                  alert('导出失败：' + e);
-                }
-              }
-            }}
-            style={{
-              width: '100%', padding: '10px', borderRadius: '8px',
-              background: 'rgba(76, 175, 80, 0.1)', border: '1px solid rgba(76, 175, 80, 0.3)',
-              color: '#4CAF50', fontSize: '13px', fontWeight: '500', cursor: 'pointer',
-            }}
-          >
-            导出数据
-          </button>
-          <button
-            onClick={async () => {
-              const path = await open({
-                filters: [{ name: 'JSON', extensions: ['json'] }],
-                multiple: false,
-              });
-              if (path) {
-                if (!confirm('导入将覆盖现有数据，是否继续？')) return;
-                try {
-                  await importData(path as string);
-                  alert('数据导入成功！');
-                  window.location.reload();
-                } catch (e) {
-                  alert('导入失败：' + e);
-                }
-              }
-            }}
-            style={{
-              width: '100%', padding: '10px', borderRadius: '8px',
-              background: 'rgba(33, 150, 243, 0.1)', border: '1px solid rgba(33, 150, 243, 0.3)',
-              color: '#2196F3', fontSize: '13px', fontWeight: '500', cursor: 'pointer',
-            }}
-          >
-            导入数据
-          </button>
-          <button
-            onClick={handleClearData}
-            style={{
-              width: '100%', padding: '10px', borderRadius: '8px',
-              background: 'rgba(255, 107, 107, 0.1)', border: '1px solid rgba(255, 107, 107, 0.3)',
-              color: '#FF6B6B', fontSize: '13px', fontWeight: '500', cursor: 'pointer',
-            }}
-          >
-            清除所有番茄记录
-          </button>
         </div>
       </div>
 
@@ -326,40 +267,41 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* 关于 */}
-      <div className="card" style={cardStyle}>
-        <SectionHeader emoji="ℹ️" title="关于" />
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', background: '#F8F8F8', borderRadius: '8px' }}>
-            <span style={{ fontSize: '13px', color: '#666' }}>应用名称</span>
-            <span style={{ fontSize: '14px', fontWeight: '500', color: '#2C2C2C' }}>番茄专注猫</span>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', background: '#F8F8F8', borderRadius: '8px' }}>
-            <span style={{ fontSize: '13px', color: '#666' }}>版本</span>
-            <span style={{ fontSize: '14px', fontWeight: '500', color: '#2C2C2C' }}>1.0.0</span>
-          </div>
-        </div>
-        <div style={{
-          marginTop: '16px',
-          padding: '16px',
-          borderRadius: '10px',
-          background: 'linear-gradient(135deg, #FFE5E5 0%, #FFF0E5 100%)',
-          border: '1px solid #FFD9C7',
-          textAlign: 'center',
-        }}>
-          <p style={{ fontSize: '13px', color: '#FF6B6B', margin: 0 }}>
-            感谢使用番茄专注猫，祝你专注高效每一天！ 🍅
-          </p>
-        </div>
-      </div>
+      {/* 恢复默认 */}
+      <button
+        onClick={async () => {
+          if (confirm('确定要恢复所有设置为默认值吗？')) {
+            await resetConfig();
+            alert('已恢复默认设置');
+          }
+        }}
+        style={{
+          width: '100%',
+          padding: '14px',
+          borderRadius: '12px',
+          border: '1px solid var(--border-color)',
+          background: 'var(--card-gradient)',
+          color: 'var(--primary-color)',
+          fontSize: '14px',
+          fontWeight: '600',
+          cursor: 'pointer',
+          boxShadow: 'var(--card-shadow)',
+          transition: 'all 0.3s ease',
+          marginBottom: '16px',
+        }}
+      >
+        恢复默认设置
+      </button>
 
-      {/* 测试模式 */}
-      <div className="card" style={cardStyle}>
-        <SectionHeader emoji="🧪" title="测试模式" />
-        <p style={{ fontSize: '13px', color: '#666', margin: '0 0 12px' }}>快速测试功能，使用1分钟代替正常时长</p>
-        <ToggleRow label={isTestMode ? '测试模式已开启' : '测试模式已关闭'} hint="" enabled={isTestMode}
-          onChange={() => setIsTestMode(!isTestMode)} />
-      </div>
+      {/* 测试模式（仅开发环境） */}
+      {import.meta.env.DEV && (
+        <div className="card" style={cardStyle}>
+          <SectionHeader emoji="🧪" title="测试模式" />
+          <p style={{ fontSize: '13px', color: 'var(--muted-color)', margin: '0 0 12px' }}>快速测试功能，使用1分钟代替正常时长</p>
+          <ToggleRow label={isTestMode ? '测试模式已开启' : '测试模式已关闭'} hint="" enabled={isTestMode}
+            onChange={() => setIsTestMode(!isTestMode)} />
+        </div>
+      )}
     </div>
   );
 }

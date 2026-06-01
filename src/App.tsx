@@ -1,5 +1,7 @@
+import { useEffect } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import GlobalTimer from "./components/GlobalTimer";
+import { useUserStore } from "./stores/userStore";
 
 // SVG 图标组件
 const TimerIcon = ({ color = "#999", size = 20 }: { color?: string; size?: number }) => (
@@ -51,19 +53,44 @@ const navItems = [
 function App() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { config, fetchConfig } = useUserStore();
+
+  useEffect(() => {
+    fetchConfig();
+  }, [fetchConfig]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+    const applyTheme = () => {
+      const preferredTheme = config?.theme ?? "light";
+      const resolvedTheme = preferredTheme === "auto"
+        ? (mediaQuery.matches ? "dark" : "light")
+        : preferredTheme;
+
+      document.documentElement.dataset.theme = resolvedTheme;
+    };
+
+    applyTheme();
+    mediaQuery.addEventListener("change", applyTheme);
+
+    return () => {
+      mediaQuery.removeEventListener("change", applyTheme);
+    };
+  }, [config?.theme]);
 
   return (
     <>
       {/* 全局计时器 - 必须在顶层，确保页面切换时计时器不会停止 */}
       <GlobalTimer />
 
-      <div style={{ display: 'flex', minHeight: '100vh', background: 'linear-gradient(135deg, #FFF8F0 0%, #FFE8D6 100%)' }}>
+      <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--app-bg)' }}>
       {/* 左侧边栏 */}
       <aside style={{
         width: '200px',
-        background: 'linear-gradient(135deg, #FFFFFF 0%, #FFF8F0 100%)',
-        borderRight: '1px solid #FFECE0',
-        boxShadow: '4px 0 12px rgba(255, 107, 107, 0.08)',
+        background: 'var(--surface-bg)',
+        borderRight: '1px solid var(--border-color)',
+        boxShadow: 'var(--sidebar-shadow)',
         display: 'flex',
         flexDirection: 'column',
         padding: '20px 0',
@@ -72,13 +99,13 @@ function App() {
         {/* Logo/标题 */}
         <div style={{
           padding: '0 20px 20px',
-          borderBottom: '1px solid #FFECE0',
+          borderBottom: '1px solid var(--border-color)',
           marginBottom: '20px'
         }}>
           <h1 style={{
             fontSize: '20px',
             fontWeight: '700',
-            color: '#FF6B6B',
+            color: 'var(--primary-color)',
             margin: '0',
             display: 'flex',
             alignItems: 'center',
@@ -118,15 +145,15 @@ function App() {
                     margin: '4px 0',
                     borderRadius: '10px',
                     textDecoration: 'none',
-                    background: isActive ? 'linear-gradient(135deg, #FFE5E5 0%, #FFF0E5 100%)' : 'transparent',
-                    color: isActive ? '#FF6B6B' : '#666',
+                    background: isActive ? 'var(--active-bg)' : 'transparent',
+                    color: isActive ? 'var(--primary-color)' : 'var(--muted-color)',
                     fontWeight: isActive ? '600' : '500',
                     fontSize: '15px',
                     transition: 'all 0.3s ease',
                     cursor: 'pointer'
                   }}
                 >
-                  <item.icon color={isActive ? '#FF6B6B' : '#999'} size={20} />
+                  <item.icon color={isActive ? 'var(--primary-color)' : 'var(--subtle-color)'} size={20} />
                   <span>{item.label}</span>
                 </Link>
               );
@@ -149,15 +176,15 @@ function App() {
               margin: '4px 0',
               borderRadius: '10px',
               textDecoration: 'none',
-              background: location.pathname === '/settings' ? 'linear-gradient(135deg, #FFE5E5 0%, #FFF0E5 100%)' : 'transparent',
-              color: location.pathname === '/settings' ? '#FF6B6B' : '#666',
+              background: location.pathname === '/settings' ? 'var(--active-bg)' : 'transparent',
+              color: location.pathname === '/settings' ? 'var(--primary-color)' : 'var(--muted-color)',
               fontWeight: location.pathname === '/settings' ? '600' : '500',
               fontSize: '15px',
               transition: 'all 0.3s ease',
               cursor: 'pointer'
             }}
           >
-            <SettingsIcon color={location.pathname === '/settings' ? '#FF6B6B' : '#999'} size={20} />
+            <SettingsIcon color={location.pathname === '/settings' ? 'var(--primary-color)' : 'var(--subtle-color)'} size={20} />
             <span>设置</span>
           </Link>
         </nav>

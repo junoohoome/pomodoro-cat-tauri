@@ -22,6 +22,7 @@ interface UserStore {
   exportData: (path: string) => Promise<void>;
   importData: (path: string) => Promise<void>;
   toggleAutoLaunch: (enabled: boolean) => Promise<void>;
+  resetConfig: () => Promise<void>;
 }
 
 // 猫咪成长阶段配置
@@ -75,6 +76,7 @@ export const useUserStore = create<UserStore>((set, get) => ({
       dailyGoal: updates.dailyGoal,
       autoLaunch: updates.autoLaunch,
       showDesktopPet: updates.showDesktopPet,
+      showDailyGoal: updates.showDailyGoal,
     });
     await get().fetchConfig();
   },
@@ -116,13 +118,29 @@ export const useUserStore = create<UserStore>((set, get) => ({
   },
 
   toggleAutoLaunch: async (enabled: boolean) => {
-    await invoke("update_user_config", { autoLaunch: enabled });
-    const { enable, disable } = await import("@tauri-apps/plugin-autostart");
-    if (enabled) {
-      await enable();
-    } else {
-      await disable();
+    // 乐观更新 UI，避免卡顿感
+    const prevConfig = get().config;
+    if (prevConfig) {
+      set({ config: { ...prevConfig, autoLaunch: enabled } });
     }
-    await get().fetchConfig();
+    try {
+      await invoke("update_user_config", { autoLaunch: enabled });
+      const { enable, disable } = await import("@tauri-apps/plugin-autostart");
+      if (enabled) {
+        await enable();
+      } else {
+        await disable();
+      }
+    } catch {
+      // 失败时回滚
+      if (prevConfig) {
+        set({ config: prevConfig });
+      }
+    }
+  },
+
+  resetConfig: async () => {
+    const config = await invoke<UserConfig>("reset_user_config");
+    set({ config });
   },
 }));

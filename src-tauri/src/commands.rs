@@ -3,7 +3,10 @@ use crate::TrayIconState;
 use rusqlite::params;
 use std::collections::HashSet;
 use tauri::{AppHandle, Manager, State};
-use chrono::{Utc, Datelike, Duration, NaiveDate};
+use chrono::{Local, Datelike, Duration, NaiveDate};
+
+const PET_WINDOW_SIZE: i32 = 180;
+const PET_WINDOW_MARGIN: i32 = 24;
 
 // 获取任务列表
 #[tauri::command]
@@ -176,7 +179,8 @@ pub fn get_user_config(app: AppHandle) -> Result<UserConfig, String> {
          COALESCE(auto_start, 0),
          COALESCE(daily_goal, 8),
          COALESCE(auto_launch, 0),
-         COALESCE(show_desktop_pet, 0)
+         COALESCE(show_desktop_pet, 0),
+         COALESCE(show_daily_goal, 1)
          FROM user_config WHERE id = 1",
         [],
         |row| Ok(UserConfig {
@@ -192,6 +196,7 @@ pub fn get_user_config(app: AppHandle) -> Result<UserConfig, String> {
             daily_goal: row.get(9)?,
             auto_launch: row.get(10)?,
             show_desktop_pet: row.get(11)?,
+            show_daily_goal: row.get(12)?,
         }),
     ).map_err(|e| e.to_string())?;
 
@@ -212,6 +217,7 @@ pub fn update_user_config(
     daily_goal: Option<i32>,
     auto_launch: Option<bool>,
     show_desktop_pet: Option<bool>,
+    show_daily_goal: Option<bool>,
 ) -> Result<UserConfig, String> {
     {
         let db_guard = app.state::<DbConnection>();
@@ -260,6 +266,10 @@ pub fn update_user_config(
             set_parts.push("show_desktop_pet = ?");
             params.push(if s { "1".to_string() } else { "0".to_string() });
         }
+        if let Some(s) = show_daily_goal {
+            set_parts.push("show_daily_goal = ?");
+            params.push(if s { "1".to_string() } else { "0".to_string() });
+        }
         set_parts.push("updated_at = datetime('now')");
 
         let sql = format!(
@@ -274,6 +284,35 @@ pub fn update_user_config(
         conn.execute(&sql, params_refs.as_slice())
             .map_err(|e| e.to_string())?;
     } // conn 在这里被释放
+
+    get_user_config(app)
+}
+
+// 重置用户配置为默认值
+#[tauri::command]
+pub fn reset_user_config(app: AppHandle) -> Result<UserConfig, String> {
+    {
+        let db_guard = app.state::<DbConnection>();
+        let conn = db_guard.0.lock().map_err(|e| format!("Failed to acquire lock: {}", e))?;
+
+        conn.execute(
+            "UPDATE user_config SET
+                focus_duration = 25,
+                break_duration = 5,
+                enable_notifications = 0,
+                enable_sound = 1,
+                theme = 'light',
+                long_break_duration = 15,
+                auto_start = 0,
+                daily_goal = 4,
+                auto_launch = 0,
+                show_desktop_pet = 1,
+                show_daily_goal = 1,
+                updated_at = datetime('now')
+             WHERE id = 1",
+            [],
+        ).map_err(|e| e.to_string())?;
+    }
 
     get_user_config(app)
 }
@@ -376,7 +415,7 @@ pub fn get_stats(app: AppHandle) -> Result<Stats, String> {
     let db_guard = app.state::<DbConnection>();
     let conn = db_guard.0.lock().map_err(|e| format!("Failed to acquire lock: {}", e))?;
 
-    let now = Utc::now();
+    let now = Local::now();
     let today = now.format("%Y-%m-%d").to_string();
     let year = now.year();
     let month = now.month();
@@ -553,22 +592,6 @@ pub fn set_state(app: AppHandle, key: String, value: String) -> Result<(), Strin
     Ok(())
 }
 
-// 清除所有番茄钟记录（用于测试模式数据重置）
-#[tauri::command]
-pub fn clear_pomodoro_records(app: AppHandle) -> Result<(), String> {
-    let db_guard = app.state::<DbConnection>();
-    let conn = db_guard.0.lock().map_err(|e| format!("Failed to acquire lock: {}", e))?;
-
-    // 清除番茄钟记录
-    conn.execute("DELETE FROM pomodoro_records", [])
-        .map_err(|e| e.to_string())?;
-
-    // 重置所有任务的番茄钟进度
-    conn.execute("UPDATE tasks SET completed_pomodoros = 0, completed = 0", [])
-        .map_err(|e| e.to_string())?;
-
-    Ok(())
-}
 
 // 导出数据到 JSON 文件
 #[tauri::command]
@@ -626,7 +649,7 @@ pub fn export_data(app: AppHandle, path: String) -> Result<(), String> {
 
     let data = ExportData {
         version: 1,
-        exported_at: Utc::now().to_rfc3339(),
+        exported_at: Local::now().to_rfc3339(),
         pomodoro_records,
         tasks,
         user_config,
@@ -677,11 +700,12 @@ pub fn import_data(app: AppHandle, path: String) -> Result<(), String> {
     conn.execute(
         "UPDATE user_config SET focus_duration = ?, break_duration = ?,
          enable_notifications = ?, enable_sound = ?, theme = ?,
-         long_break_duration = ?, auto_start = ?, daily_goal = ?, auto_launch = ?
+         long_break_duration = ?, auto_start = ?, daily_goal = ?, auto_launch = ?,
+         show_desktop_pet = ?, show_daily_goal = ?
          WHERE id = 1",
         params![uc.focus_duration, uc.break_duration, uc.enable_notifications,
                 uc.enable_sound, uc.theme, uc.long_break_duration, uc.auto_start,
-                uc.daily_goal, uc.auto_launch],
+                uc.daily_goal, uc.auto_launch, uc.show_desktop_pet, uc.show_daily_goal],
     ).map_err(|e| e.to_string())?;
 
     conn.execute_batch("COMMIT").map_err(|e| e.to_string())?;
@@ -702,34 +726,107 @@ pub fn update_tray_title(state: State<TrayIconState>, title: String) -> Result<(
 // 切换桌面宠物窗口显示/隐藏
 #[tauri::command]
 pub fn toggle_pet_window(app: AppHandle, show: bool) -> Result<(), String> {
-    if let Some(pet_window) = app.get_webview_window("pet") {
-        if show {
-            // 尝试恢复保存的位置
-            let saved_pos = {
-                let db_guard = app.state::<DbConnection>();
-                let conn = db_guard.0.lock().map_err(|e| format!("Failed to acquire lock: {}", e))?;
-                conn.query_row(
-                    "SELECT value FROM app_state WHERE key = 'pet_position'",
-                    [],
-                    |row| row.get::<_, String>(0),
-                ).ok()
-            };
+    apply_pet_window_visibility(&app, show)
+}
 
-            if let Some(pos_json) = saved_pos {
-                if let Ok(pos) = serde_json::from_str::<serde_json::Value>(&pos_json) {
-                    if let (Some(x), Some(y)) = (pos["x"].as_f64(), pos["y"].as_f64()) {
-                        let _ = pet_window.set_position(tauri::Position::Logical(
-                            tauri::LogicalPosition::new(x, y)
-                        ));
-                    }
-                }
-            }
+pub fn sync_pet_window_with_config(app: &AppHandle) -> Result<(), String> {
+    let show = {
+        let db_guard = app.state::<DbConnection>();
+        let conn = db_guard.0.lock().map_err(|e| format!("Failed to acquire lock: {}", e))?;
+        conn.query_row(
+            "SELECT COALESCE(show_desktop_pet, 0) FROM user_config WHERE id = 1",
+            [],
+            |row| row.get::<_, bool>(0),
+        )
+        .map_err(|e| format!("Failed to read desktop pet config: {}", e))?
+    };
 
-            let _ = pet_window.show();
-            let _ = pet_window.set_ignore_cursor_events(true);
-        } else {
-            let _ = pet_window.hide();
-        }
+    apply_pet_window_visibility(app, show)
+}
+
+pub fn apply_pet_window_visibility(app: &AppHandle, show: bool) -> Result<(), String> {
+    let pet_window = app
+        .get_webview_window("pet")
+        .ok_or_else(|| "Desktop pet window was not created".to_string())?;
+
+    if show {
+        let monitors = app
+            .available_monitors()
+            .map_err(|e| format!("Failed to read monitor info: {}", e))?;
+        let position = saved_pet_position(&app)
+            .filter(|pos| is_pet_position_visible(pos, &monitors))
+            .unwrap_or(default_pet_position(&app)?);
+
+        pet_window
+            .set_position(tauri::Position::Physical(position))
+            .map_err(|e| format!("Failed to position desktop pet: {}", e))?;
+        pet_window
+            .set_always_on_top(true)
+            .map_err(|e| format!("Failed to keep desktop pet on top: {}", e))?;
+        pet_window
+            .set_ignore_cursor_events(false)
+            .map_err(|e| format!("Failed to enable desktop pet interaction: {}", e))?;
+        pet_window
+            .show()
+            .map_err(|e| format!("Failed to show desktop pet: {}", e))?;
+    } else {
+        pet_window
+            .hide()
+            .map_err(|e| format!("Failed to hide desktop pet: {}", e))?;
     }
+
     Ok(())
+}
+
+fn saved_pet_position(app: &AppHandle) -> Option<tauri::PhysicalPosition<i32>> {
+    let db_guard = app.state::<DbConnection>();
+    let conn = db_guard.0.lock().ok()?;
+    let pos_json = conn
+        .query_row(
+            "SELECT value FROM app_state WHERE key = 'pet_position'",
+            [],
+            |row| row.get::<_, String>(0),
+        )
+        .ok()?;
+    let pos = serde_json::from_str::<serde_json::Value>(&pos_json).ok()?;
+    let x = pos["x"].as_i64()?.try_into().ok()?;
+    let y = pos["y"].as_i64()?.try_into().ok()?;
+
+    Some(tauri::PhysicalPosition::new(x, y))
+}
+
+fn is_pet_position_visible(
+    pos: &tauri::PhysicalPosition<i32>,
+    monitors: &[tauri::Monitor],
+) -> bool {
+    monitors.iter().any(|monitor| {
+        let origin = monitor.position();
+        let size = monitor.size();
+        let left = origin.x;
+        let top = origin.y;
+        let right = left + size.width as i32;
+        let bottom = top + size.height as i32;
+
+        pos.x >= left
+            && pos.y >= top
+            && pos.x + PET_WINDOW_SIZE <= right
+            && pos.y + PET_WINDOW_SIZE <= bottom
+    })
+}
+
+fn default_pet_position(app: &AppHandle) -> Result<tauri::PhysicalPosition<i32>, String> {
+    let monitor = app
+        .primary_monitor()
+        .map_err(|e| format!("Failed to read primary monitor: {}", e))?
+        .or_else(|| app.available_monitors().ok().and_then(|mut monitors| monitors.pop()))
+        .ok_or_else(|| "No monitor available for desktop pet".to_string())?;
+    let origin = monitor.position();
+    let size = monitor.size();
+    let max_x = origin.x + size.width as i32 - PET_WINDOW_SIZE - PET_WINDOW_MARGIN;
+    let max_y = origin.y + size.height as i32 - PET_WINDOW_SIZE - PET_WINDOW_MARGIN;
+
+    Ok(tauri::PhysicalPosition::new(
+        max_x.max(origin.x + PET_WINDOW_MARGIN),
+        max_y.max(origin.y + PET_WINDOW_MARGIN),
+    ))
 }

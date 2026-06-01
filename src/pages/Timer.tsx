@@ -4,7 +4,9 @@ import { useTaskStore } from "../stores/taskStore";
 import { useUserStore } from "../stores/userStore";
 import { useTestModeStore } from "../stores/testModeStore";
 import { invoke } from "@tauri-apps/api/core";
-import { sendNotification } from "@tauri-apps/plugin-notification";
+import { sendNotification as sendTauriNotification } from "@tauri-apps/plugin-notification";
+import { emit } from "@tauri-apps/api/event";
+import { playCompleteSound, playBreakEndSound } from "../lib/sound";
 
 const CAT_ICONS: Record<number, string> = {
   1: "🐱",
@@ -54,6 +56,24 @@ export default function TimerPage() {
     }
   }, [remainingSeconds, state]);
 
+  // 发送通知：桌面宠物可见时用宠物气泡，否则用系统通知
+  const sendPetNotification = async (title: string, body: string) => {
+    try {
+      await emit("pet-notification", { title, body });
+    } catch (e) {
+      console.warn("pet-notification emit failed:", e);
+    }
+  };
+
+  const sendSystemNotification = async (title: string, body: string) => {
+    try {
+      await sendTauriNotification({ title, body });
+    } catch (error) {
+      console.error('通知发送失败:', error);
+      showBrowserNotification(title, body);
+    }
+  };
+
   const handleComplete = async () => {
     if (type === "focus") {
       const focusMinutes = config?.focusDuration || 25;
@@ -77,17 +97,18 @@ export default function TimerPage() {
       const todayCount = useUserStore.getState().stats?.todayCount || 0;
       const dailyGoal = config?.dailyGoal || 8;
 
-      try {
-        await sendNotification({
-          title: '专注完成！',
-          body: todayCount >= dailyGoal
-            ? '目标达成！今天太棒了！'
-            : '太棒了！休息一下吧~',
-          sound: 'default',
-        });
-      } catch (error) {
-        console.error('通知发送失败:', error);
-        showBrowserNotification('专注完成！', todayCount >= dailyGoal ? '目标达成！' : '太棒了！休息一下吧~');
+      // 播放声音
+      if (config?.enableSound !== false) {
+        playCompleteSound();
+      }
+
+      // 发送通知
+      if (config?.enableNotifications !== false) {
+        const msg = todayCount >= dailyGoal
+          ? '目标达成！今天太棒了！'
+          : '太棒了！休息一下吧~';
+        sendSystemNotification('专注完成！', msg);
+        sendPetNotification('专注完成！', msg);
       }
 
       prepareBreakMode();
@@ -100,15 +121,15 @@ export default function TimerPage() {
         start(storedFocusDuration, breakMins, storedLongBreakDuration, storedAutoStart);
       }
     } else {
-      try {
-        await sendNotification({
-          title: '休息结束！',
-          body: '准备开始新的专注吧~',
-          sound: 'default',
-        });
-      } catch (error) {
-        console.error('通知发送失败:', error);
-        showBrowserNotification('休息结束！', '准备开始新的专注吧~');
+      // 播放声音
+      if (config?.enableSound !== false) {
+        playBreakEndSound();
+      }
+
+      // 发送通知
+      if (config?.enableNotifications !== false) {
+        sendSystemNotification('休息结束！', '准备开始新的专注吧~');
+        sendPetNotification('休息结束！', '准备开始新的专注吧~');
       }
 
       stop();
@@ -164,8 +185,8 @@ export default function TimerPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
-      {/* 右下角测试模式标记 */}
-      {isTestMode && (
+      {/* 右下角测试模式标记（仅开发环境） */}
+      {import.meta.env.DEV && isTestMode && (
         <div style={{
           position: 'fixed',
           bottom: '20px',
@@ -398,46 +419,36 @@ export default function TimerPage() {
       )}
 
       {/* 每日目标进度 */}
-      {config && stats && (
+      {config && config.showDailyGoal && stats && stats.todayCount < (config.dailyGoal || 8) && (
         <div style={{
           width: '100%',
           marginTop: '16px',
           padding: '12px 16px',
-          background: 'linear-gradient(135deg, #FFFFFF 0%, #FFF8F0 100%)',
+          background: 'var(--card-gradient)',
           borderRadius: '9px',
-          border: '1px solid #FFECE0',
-          boxShadow: '0 4px 12px rgba(255, 107, 107, 0.14)',
+          border: '1px solid var(--border-color)',
+          boxShadow: 'var(--card-shadow)',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
+          gap: '12px',
         }}>
-          <span style={{ fontSize: '13px', color: '#666' }}>今日目标</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{
-              width: '120px',
-              height: '6px',
-              background: '#F0F0F0',
-              borderRadius: '3px',
-              overflow: 'hidden',
-            }}>
-              <div style={{
+          <span style={{ fontSize: '13px', color: 'var(--muted-color)', flexShrink: 0 }}>今日目标</span>
+          <div className="progress-bar" style={{ flex: 1 }}>
+            <div
+              className="progress-fill"
+              style={{
                 width: `${Math.min(100, (stats.todayCount / (config.dailyGoal || 8)) * 100)}%`,
-                height: '100%',
-                background: stats.todayCount >= (config.dailyGoal || 8)
-                  ? 'linear-gradient(90deg, #4CAF50, #66BB6A)'
-                  : 'linear-gradient(90deg, #FF6B6B, #FFA94D)',
-                borderRadius: '3px',
-                transition: 'width 0.5s ease',
-              }} />
-            </div>
-            <span style={{
-              fontSize: '13px',
-              fontWeight: '600',
-              color: stats.todayCount >= (config.dailyGoal || 8) ? '#4CAF50' : '#FF6B6B',
-            }}>
-              {stats.todayCount}/{config.dailyGoal || 8}
-            </span>
+              }}
+            />
           </div>
+          <span style={{
+            fontSize: '13px',
+            fontWeight: '600',
+            color: 'var(--primary-color)',
+            flexShrink: 0,
+          }}>
+            {stats.todayCount}/{config.dailyGoal || 8}
+          </span>
         </div>
       )}
     </div>

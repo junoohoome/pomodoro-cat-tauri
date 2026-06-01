@@ -43,7 +43,7 @@ pub fn init_db(conn: &Connection) -> SqliteResult<()> {
             id INTEGER PRIMARY KEY DEFAULT 1,
             focus_duration INTEGER NOT NULL DEFAULT 25,
             break_duration INTEGER NOT NULL DEFAULT 5,
-            enable_notifications INTEGER NOT NULL DEFAULT 1,
+            enable_notifications INTEGER NOT NULL DEFAULT 0,
             enable_sound INTEGER NOT NULL DEFAULT 1,
             theme TEXT NOT NULL DEFAULT 'light',
             updated_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -82,9 +82,10 @@ pub fn init_db(conn: &Connection) -> SqliteResult<()> {
     // 迁移：添加新配置字段（忽略已存在的列）
     let _ = conn.execute("ALTER TABLE user_config ADD COLUMN long_break_duration INTEGER NOT NULL DEFAULT 15", []);
     let _ = conn.execute("ALTER TABLE user_config ADD COLUMN auto_start INTEGER NOT NULL DEFAULT 0", []);
-    let _ = conn.execute("ALTER TABLE user_config ADD COLUMN daily_goal INTEGER NOT NULL DEFAULT 8", []);
+    let _ = conn.execute("ALTER TABLE user_config ADD COLUMN daily_goal INTEGER NOT NULL DEFAULT 4", []);
     let _ = conn.execute("ALTER TABLE user_config ADD COLUMN auto_launch INTEGER NOT NULL DEFAULT 0", []);
-    let _ = conn.execute("ALTER TABLE user_config ADD COLUMN show_desktop_pet INTEGER NOT NULL DEFAULT 0", []);
+    let _ = conn.execute("ALTER TABLE user_config ADD COLUMN show_desktop_pet INTEGER NOT NULL DEFAULT 1", []);
+    let _ = conn.execute("ALTER TABLE user_config ADD COLUMN show_daily_goal INTEGER NOT NULL DEFAULT 1", []);
 
     Ok(())
 }
@@ -144,6 +145,7 @@ pub struct UserConfig {
     pub daily_goal: i32,
     pub auto_launch: bool,
     pub show_desktop_pet: bool,
+    pub show_daily_goal: bool,
 }
 
 // 番茄钟记录

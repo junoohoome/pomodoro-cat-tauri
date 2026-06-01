@@ -114,7 +114,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_autostart::init(MacosLauncher::LaunchAgent, None))
+        .plugin(tauri_plugin_autostart::init(MacosLauncher::LaunchAgent, Some(vec!["--auto-start"])))
         .setup(|app| {
             // 初始化数据库
             let db_path = get_db_path(app.handle());
@@ -133,17 +133,9 @@ pub fn run() {
             // 将连接存入全局状态
             app.manage(DbConnection(Mutex::new(conn)));
 
-            // 开机启动时隐藏窗口（最小化到托盘）
-            let auto_launch: bool = {
-                let db_guard = app.state::<DbConnection>();
-                let conn = db_guard.0.lock().unwrap();
-                conn.query_row(
-                    "SELECT COALESCE(auto_launch, 0) FROM user_config WHERE id = 1",
-                    [],
-                    |row| row.get::<_, i32>(0),
-                ).unwrap_or(0) != 0
-            };
-            if auto_launch {
+            // 仅在开机自启时隐藏窗口（通过启动参数区分自启动和手动启动）
+            let is_auto_start = std::env::args().any(|arg| arg == "--auto-start");
+            if is_auto_start {
                 if let Some(window) = app.get_webview_window("main") {
                     let _ = window.hide();
                 }
@@ -156,7 +148,7 @@ pub fn run() {
                 let tray_state = TrayIconState::new(app.handle());
 
                 // 创建初始菜单栏图标
-                if let Err(e) = tray_state.create_tray_icon(app.handle(), "🐱") {
+                if let Err(e) = tray_state.create_tray_icon(app.handle(), "") {
                     eprintln!("Failed to create initial tray icon: {}", e);
                 }
 
@@ -177,12 +169,16 @@ pub fn run() {
                 .decorations(false)
                 .always_on_top(true)
                 .skip_taskbar(true)
-                .inner_size(180.0, 180.0)
+                .inner_size(180.0, 230.0)
                 .resizable(false)
                 .shadow(false)
                 .visible(false)
                 .build()
                 .expect("Failed to create pet window");
+
+                if let Err(e) = commands::sync_pet_window_with_config(app.handle()) {
+                    eprintln!("Failed to sync desktop pet visibility: {}", e);
+                }
             }
 
             // === 宠物窗口事件监听 ===
@@ -221,10 +217,10 @@ pub fn run() {
             // 配置相关
             commands::get_user_config,
             commands::update_user_config,
+            commands::reset_user_config,
             // 记录相关
             commands::record_pomodoro,
             commands::get_stats,
-            commands::clear_pomodoro_records,
             // 状态相关
             commands::get_state,
             commands::set_state,

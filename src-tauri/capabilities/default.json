@@ -16,6 +16,7 @@
     "core:window:allow-set-position",
     "opener:default",
     "notification:default",
-    "dialog:default"
+    "dialog:default",
+    "autostart:default"
   ]
 }
