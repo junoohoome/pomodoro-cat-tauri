@@ -6,8 +6,9 @@ mod db;
 mod commands;
 
 use db::*;
+use rusqlite::params;
 use std::sync::{Arc, Mutex};
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Manager, Listener};
 use tauri_plugin_autostart::MacosLauncher;
 
 // TrayIconState 全局状态管理
@@ -168,6 +169,31 @@ pub fn run() {
                 .expect("Failed to create pet window");
             }
 
+            // === 宠物窗口事件监听 ===
+            let app_handle = app.handle().clone();
+            app.listen("pet-clicked", move |_| {
+                if let Some(window) = app_handle.get_webview_window("main") {
+                    let _ = window.show();
+                    let _ = window.set_focus();
+                }
+            });
+
+            let app_handle_drag = app.handle().clone();
+            app.listen("pet-dragged", move |event: tauri::Event| {
+                let payload_str = event.payload();
+                let _ = app_handle_drag
+                    .state::<DbConnection>()
+                    .0
+                    .lock()
+                    .map_err(|e| e.to_string())
+                    .and_then(|conn| {
+                        conn.execute(
+                            "INSERT OR REPLACE INTO app_state (key, value) VALUES ('pet_position', ?)",
+                            params![payload_str],
+                        ).map_err(|e| e.to_string())
+                    });
+            });
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -188,6 +214,9 @@ pub fn run() {
             commands::set_state,
             // 菜单栏相关
             commands::update_tray_title,
+            // 数据管理
+            commands::export_data,
+            commands::import_data,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
