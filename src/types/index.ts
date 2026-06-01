@@ -70,13 +70,33 @@ export interface UserData {
 
 // 统计数据
 export interface Stats {
-  todayCount: number;         // 今日完成次数
-  todayMinutes: number;       // 今日专注分钟数
-  weekCount: number;          // 本周完成次数
-  weekMinutes: number;        // 本周专注分钟数
-  totalCount: number;         // 总完成次数
-  totalMinutes: number;       // 总专注分钟数
-  dailyData: DailyStats[];    // 最近7天数据
+  todayCount: number;
+  todayMinutes: number;
+  weekCount: number;
+  weekMinutes: number;
+  totalCount: number;
+  totalMinutes: number;
+  dailyData: DailyStats[];
+
+  // 周报数据
+  weekStartDate: string;
+  weekEndDate: string;
+  weekStreakDays: number;
+  weekCompletedTasks: number;
+  weekIncompleteTasks: number;
+  weekTaskBreakdown: TaskReportItem[];
+  weekDailyData: DailyStats[];
+
+  // 月报数据
+  monthStartDate: string;
+  monthEndDate: string;
+  monthCount: number;
+  monthMinutes: number;
+  monthStreakDays: number;
+  monthCompletedTasks: number;
+  monthIncompleteTasks: number;
+  monthTaskBreakdown: TaskReportItem[];
+  monthDailyData: DailyStats[];
 }
 
 // 每日统计
@@ -84,6 +104,15 @@ export interface DailyStats {
   date: string;               // YYYY-MM-DD
   count: number;
   minutes: number;
+}
+
+// 任务报告项
+export interface TaskReportItem {
+  taskId: number;
+  taskName: string;
+  pomodoroCount: number;
+  focusMinutes: number;
+  isCompleted: boolean;
 }
 
 // 计时器状态
