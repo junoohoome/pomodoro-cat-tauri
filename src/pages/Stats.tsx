@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useUserStore } from "../stores/userStore";
 import ReportTab from "../components/stats/ReportTab";
+import type { TaskReportItem, HourlySegment } from "../types";
 
 type StatsTab = "overview" | "weekly" | "monthly";
 
@@ -14,11 +15,19 @@ export default function StatsPage() {
 
   if (!stats) {
     return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <span className="text-gray">加载中...</span>
+      <div style={{ display: 'flex', height: '50vh', alignItems: 'center', justifyContent: 'center' }}>
+        <span style={{ color: 'var(--text-tertiary)', fontSize: '14px' }}>加载中...</span>
       </div>
     );
   }
+
+  // 格式化本地日期为 YYYY-MM-DD，避免 toISOString() 的 UTC 时区偏移
+  const formatLocalDate = (d: Date): string => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
 
   const formatDateRange = (start: string, end: string) => {
     const s = new Date(start + "T00:00:00");
@@ -26,331 +35,273 @@ export default function StatsPage() {
     return `${s.getMonth() + 1}/${s.getDate()} - ${e.getMonth() + 1}/${e.getDate()}`;
   };
 
-  // 生成周报的所有天（周一到周日）
   const weekDays = Array.from({ length: 7 }, (_, i) => {
     const start = new Date(stats.weekStartDate + "T00:00:00");
     const d = new Date(start);
     d.setDate(start.getDate() + i);
-    return d.toISOString().split("T")[0];
+    return formatLocalDate(d);
   });
 
-  // 生成月报的所有天
   const startDate = new Date(stats.monthStartDate + "T00:00:00");
   const endDate = new Date(stats.monthEndDate + "T00:00:00");
   const totalDays = endDate.getDate();
   const monthDays = Array.from({ length: totalDays }, (_, i) => {
     const d = new Date(startDate);
     d.setDate(d.getDate() + i);
-    return d.toISOString().split("T")[0];
+    return formatLocalDate(d);
   });
 
-  const renderOverview = () => {
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - (6 - i));
-      return date.toISOString().split("T")[0];
-    });
+  const renderToday = () => {
+    const today = new Date();
+    const todayLabel = `${today.getMonth() + 1}月${today.getDate()}日`;
 
-    const chartData = last7Days.map((date) => {
-      const found = stats.dailyData.find((d) => d.date === date);
-      const minutes = found?.minutes || 0;
-      const standardMinutes = 480;
-      const heightPercent = (minutes / standardMinutes) * 100;
-      const adjustedHeight = minutes > 0 ? Math.max(10, Math.min(100, heightPercent)) : 5;
-      const hours = minutes > 0 ? (minutes / 60).toFixed(1) : "0";
-
-      return {
-        date,
-        count: found?.count || 0,
-        minutes,
-        hours,
-        height: adjustedHeight,
-        shortLabel: (() => {
-          const d = new Date(date);
-          const today = new Date();
-          const yesterday = new Date(today);
-          yesterday.setDate(yesterday.getDate() - 1);
-          if (d.toDateString() === today.toDateString()) return "今天";
-          if (d.toDateString() === yesterday.toDateString()) return "昨天";
-          return `${d.getMonth() + 1}/${d.getDate()}`;
-        })(),
-      };
-    });
+    // Calculate max minutes for hourly chart scale
+    const maxMinutes = Math.max(...stats.todayHourlyData.map((s: HourlySegment) => s.minutes), 1);
 
     return (
-      <>
-        {/* 统计数据 */}
-        <div className="total-section" style={{ marginBottom: "12px" }}>
-          <div className="total-header" style={{ padding: "8px 0" }}>
-            <span className="total-title" style={{ fontSize: "14px", fontWeight: "600", color: "#2C2C2C" }}>
-              统计数据
+      <div>
+        {/* Title */}
+        <div style={{ marginBottom: '12px', display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+          <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>今日报告</span>
+          <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>{todayLabel}</span>
+        </div>
+
+        {/* Summary cards — same 3-card layout as ReportTab */}
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+          <div style={{
+            flex: 1,
+            background: 'var(--card-bg)',
+            borderRadius: 'var(--radius-md)',
+            padding: '14px 10px',
+            textAlign: 'center',
+            border: '1px solid var(--border-color)',
+            boxShadow: 'none',
+          }}>
+            <span style={{ fontSize: '20px', fontWeight: '600', color: 'var(--text-primary)', display: 'block', fontVariantNumeric: 'tabular-nums' }}>
+              {stats.todayCount}
+            </span>
+            <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>番茄数</span>
+          </div>
+          <div style={{
+            flex: 1,
+            background: 'var(--card-bg)',
+            borderRadius: 'var(--radius-md)',
+            padding: '14px 10px',
+            textAlign: 'center',
+            border: '1px solid var(--border-color)',
+            boxShadow: 'none',
+          }}>
+            <span style={{ fontSize: '20px', fontWeight: '600', color: 'var(--text-primary)', display: 'block', fontVariantNumeric: 'tabular-nums' }}>
+              {stats.todayMinutes > 0 ? (stats.todayMinutes / 60).toFixed(1) + "h" : "0h"}
+            </span>
+            <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>专注时长</span>
+          </div>
+          <div style={{
+            flex: 1,
+            background: 'var(--card-bg)',
+            borderRadius: 'var(--radius-md)',
+            padding: '14px 10px',
+            textAlign: 'center',
+            border: '1px solid var(--border-color)',
+            boxShadow: 'none',
+          }}>
+            <span style={{ fontSize: '20px', fontWeight: '600', color: 'var(--text-primary)', display: 'block', fontVariantNumeric: 'tabular-nums' }}>
+              {stats.todayCount}/{stats.dailyGoal}
+            </span>
+            <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>今日目标</span>
+          </div>
+        </div>
+
+        {/* Task completion overview */}
+        <div style={{
+          background: 'var(--card-bg)',
+          borderRadius: 'var(--radius-md)',
+          padding: '12px 16px',
+          border: '1px solid var(--border-color)',
+          boxShadow: 'none',
+          marginBottom: '12px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}>
+          <span style={{ fontSize: '13px', fontWeight: '500', color: 'var(--text-primary)' }}>任务完成情况</span>
+          <div style={{ display: 'flex', gap: '12px', fontSize: '12px' }}>
+            <span style={{ color: 'var(--success-color)' }}>已完成 {stats.todayCompletedTasks}</span>
+            <span style={{ color: 'var(--warning-color)' }}>进行中 {stats.todayIncompleteTasks}</span>
+          </div>
+        </div>
+
+        {/* Hourly bar chart — morning / afternoon / evening / night */}
+        <div style={{
+          background: 'var(--card-bg)',
+          borderRadius: 'var(--radius-md)',
+          padding: '14px',
+          border: '1px solid var(--border-color)',
+          boxShadow: 'none',
+          marginBottom: '12px',
+        }}>
+          <div style={{ marginBottom: '12px' }}>
+            <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>
+              今日时段分布
             </span>
           </div>
-          <div className="total-cards" style={{ display: "flex", gap: "8px" }}>
-            <div className="total-card card" style={{
-              flex: 1,
-              background: "linear-gradient(135deg, #FFFFFF 0%, #FFF8F0 100%)",
-              borderRadius: "10px",
-              padding: "16px 12px",
-              textAlign: "center",
-              boxShadow: "0 4px 12px rgba(255, 107, 107, 0.12)",
-              border: "1px solid #FFECE0",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-            }}>
-              <div className="total-icon-wrapper" style={{
-                width: "36px",
-                height: "36px",
-                background: "linear-gradient(135deg, #FFE5E5 0%, #FFF0E5 100%)",
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                marginBottom: "8px",
-              }}>
-                <span className="total-icon" style={{ fontSize: "20px", lineHeight: "1" }}>📅</span>
-              </div>
-              <span className="total-label" style={{ fontSize: "12px", color: "#666", display: "block", marginBottom: "4px", fontWeight: "500" }}>
-                今日专注
-              </span>
-              <span className="total-value" style={{
-                fontSize: "24px",
-                fontWeight: "700",
-                color: "#FF6B6B",
-                display: "block",
-                marginBottom: "4px",
-              }}>
-                {stats.todayMinutes > 0 ? (stats.todayMinutes / 60).toFixed(1) + "h" : "0h"}
-              </span>
-              <div className="total-pomodoro" style={{
-                display: "flex",
-                alignItems: "baseline",
-                gap: "3px",
-                padding: "4px 8px",
-                background: "rgba(255, 107, 107, 0.08)",
-                borderRadius: "10px",
-              }}>
-                <span className="pomodoro-number" style={{ fontSize: "14px", fontWeight: "700", color: "#FF6B6B" }}>
-                  {stats.todayCount}
-                </span>
-                <span className="pomodoro-unit" style={{ fontSize: "10px", color: "#FF6B6B", opacity: 0.85 }}>
-                  个番茄钟
-                </span>
-              </div>
-            </div>
 
-            <div className="total-card card" style={{
-              flex: 1,
-              background: "linear-gradient(135deg, #FFFFFF 0%, #FFF8F0 100%)",
-              borderRadius: "10px",
-              padding: "16px 12px",
-              textAlign: "center",
-              boxShadow: "0 4px 12px rgba(255, 107, 107, 0.12)",
-              border: "1px solid #FFECE0",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
+          <div style={{
+            borderRadius: 'var(--radius-sm)',
+            padding: '12px 4px 10px',
+            background: 'var(--surface-secondary)',
+            border: '1px solid var(--border-subtle)',
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'flex-end',
+              justifyContent: 'space-around',
+              height: '140px',
             }}>
-              <div className="total-icon-wrapper" style={{
-                width: "36px",
-                height: "36px",
-                background: "linear-gradient(135deg, #FFE5E5 0%, #FFF0E5 100%)",
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                marginBottom: "8px",
-              }}>
-                <span className="total-icon" style={{ fontSize: "20px", lineHeight: "1" }}>📊</span>
-              </div>
-              <span className="total-label" style={{ fontSize: "12px", color: "#666", display: "block", marginBottom: "4px", fontWeight: "500" }}>
-                本周专注
-              </span>
-              <span className="total-value" style={{
-                fontSize: "24px",
-                fontWeight: "700",
-                color: "#FF6B6B",
-                display: "block",
-              }}>
-                {stats.weekMinutes > 0 ? (stats.weekMinutes / 60).toFixed(1) + "h" : "0h"}
-              </span>
-              <div className="total-pomodoro" style={{
-                display: "flex",
-                alignItems: "baseline",
-                gap: "3px",
-                padding: "4px 8px",
-                background: "rgba(255, 107, 107, 0.08)",
-                borderRadius: "10px",
-              }}>
-                <span className="pomodoro-number" style={{ fontSize: "14px", fontWeight: "700", color: "#FF6B6B" }}>
-                  {stats.weekCount}
-                </span>
-                <span className="pomodoro-unit" style={{ fontSize: "10px", color: "#FF6B6B", opacity: 0.85 }}>
-                  个番茄钟
-                </span>
-              </div>
+              {stats.todayHourlyData.map((seg: HourlySegment) => {
+                const heightPercent = seg.minutes > 0 ? Math.max(15, (seg.minutes / maxMinutes) * 100) : 5;
+                return (
+                  <div key={seg.startHour} style={{
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    height: '100%',
+                    padding: '0 8px',
+                  }}>
+                    <div style={{
+                      flex: 1,
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'flex-end',
+                      justifyContent: 'center',
+                      height: '100%',
+                    }}>
+                      {seg.minutes > 0 && (
+                        <div style={{
+                          width: '40px',
+                          minHeight: '6px',
+                          background: 'var(--accent-color)',
+                          borderRadius: '4px 4px 0 0',
+                          position: 'relative',
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          justifyContent: 'center',
+                          transition: 'height 0.5s ease',
+                          height: `${heightPercent}%`,
+                        }}>
+                          <span style={{
+                            position: 'absolute',
+                            top: '-16px',
+                            fontSize: '10px',
+                            color: 'var(--text-secondary)',
+                            fontWeight: '500',
+                            whiteSpace: 'nowrap',
+                            fontVariantNumeric: 'tabular-nums',
+                          }}>
+                            {seg.minutes > 0 ? (seg.minutes / 60).toFixed(1) + "h" : ""}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '8px', fontWeight: '400' }}>
+                      {seg.label}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
 
-        {/* 历史柱状图 */}
-        <div className="card chart-section" style={{ padding: "14px" }}>
-          <div className="section-header" style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
-            <div className="section-icon" style={{
-              fontSize: "16px",
-              marginRight: "6px",
-              width: "24px",
-              height: "24px",
-              background: "linear-gradient(135deg, #FFE5E5 0%, #FFF0E5 100%)",
-              borderRadius: "50%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              lineHeight: "1",
-            }}>
-              📈
-            </div>
-            <span className="section-title" style={{ fontSize: "14px", fontWeight: "600", color: "#2C2C2C" }}>
-              最近7天
-            </span>
+        {/* Task breakdown */}
+        <div style={{
+          background: 'var(--card-bg)',
+          borderRadius: 'var(--radius-md)',
+          padding: '14px 16px',
+          border: '1px solid var(--border-color)',
+          boxShadow: 'none',
+        }}>
+          <div style={{ marginBottom: '10px' }}>
+            <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>任务投入明细</span>
           </div>
 
-          <div className="chart-container" style={{
-            borderRadius: "8px",
-            padding: "12px 4px 10px",
-            background: "#fafafa",
-            border: "1px solid #f0f0f0",
-          }}>
-            <div className="chart-bars" style={{
-              display: "flex",
-              alignItems: "flex-end",
-              justifyContent: "space-between",
-              height: "160px",
+          {stats.todayTaskBreakdown.length === 0 ? (
+            <div style={{
+              textAlign: 'center',
+              padding: '16px 0',
+              color: 'var(--text-tertiary)',
+              fontSize: '13px',
             }}>
-              {chartData.map((data) => (
-                <div key={data.date} className="chart-bar-item" style={{
-                  flex: 1,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  height: "100%",
-                  padding: "0 2px",
+              今天还没有专注记录
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {stats.todayTaskBreakdown.map((task: TaskReportItem) => (
+                <div key={task.taskId} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '8px 10px',
+                  background: 'var(--surface-secondary)',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-subtle)',
                 }}>
-                  <div className="bar-wrapper" style={{
-                    flex: 1,
-                    width: "100%",
-                    display: "flex",
-                    alignItems: "flex-end",
-                    justifyContent: "center",
-                    height: "100%",
-                  }}>
-                    {data.minutes > 0 && (
-                      <div className="bar-fill" style={{
-                        width: "26px",
-                        minHeight: "6px",
-                        background: "linear-gradient(180deg, #FF6B6B 0%, #FFA94D 100%)",
-                        borderRadius: "6px 6px 0 0",
-                        position: "relative",
-                        display: "flex",
-                        alignItems: "flex-start",
-                        justifyContent: "center",
-                        transition: "height 0.5s ease",
-                        boxShadow: "0 2px 6px rgba(255, 107, 107, 0.25)",
-                        height: `${Math.max(data.height, 6)}%`,
-                      }}>
-                        <span className="bar-value" style={{
-                          position: "absolute",
-                          top: "-14px",
-                          fontSize: "11px",
-                          color: "#FF6B6B",
-                          fontWeight: "700",
-                          textShadow: "0 1px 2px rgba(255, 255, 255, 0.8)",
-                        }}>
-                          {data.hours}
-                        </span>
-                      </div>
-                    )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
+                    <span style={{
+                      fontSize: '11px',
+                      padding: '1px 6px',
+                      borderRadius: '4px',
+                      background: task.isCompleted ? 'rgba(52, 199, 89, 0.08)' : 'rgba(255, 149, 0, 0.08)',
+                      color: task.isCompleted ? 'var(--success-color)' : 'var(--warning-color)',
+                      fontWeight: '500',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {task.isCompleted ? "已完成" : "进行中"}
+                    </span>
+                    <span style={{
+                      fontSize: '13px',
+                      color: 'var(--text-primary)',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {task.taskName}
+                    </span>
                   </div>
-                  <span className="bar-label" style={{ fontSize: "10px", color: "#666", marginTop: "8px", fontWeight: "500" }}>
-                    {data.shortLabel}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', flexShrink: 0 }}>
+                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                      {task.pomodoroCount} 番茄
+                    </span>
+                    <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontVariantNumeric: 'tabular-nums' }}>
+                      {task.focusMinutes > 0 ? (task.focusMinutes / 60).toFixed(1) + "h" : "0h"}
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>
-          </div>
+          )}
         </div>
-
-        {/* 总计统计 */}
-        <div className="card" style={{
-          background: "linear-gradient(135deg, #FFFFFF 0%, #FFF8F0 100%)",
-          borderRadius: "10px",
-          padding: "12px 16px",
-          boxShadow: "0 2px 6px rgba(0, 0, 0, 0.05)",
-          border: "1px solid #FFECE0",
-          marginBottom: "12px",
-        }}>
-          <h3 style={{ fontSize: "14px", fontWeight: "600", color: "#2C2C2C", marginBottom: "12px" }}>
-            总统计数据
-          </h3>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px", background: "#f8f8f8", borderRadius: "6px" }}>
-              <div style={{
-                width: "28px",
-                height: "28px",
-                background: "linear-gradient(135deg, #FFE5E5 0%, #FFF0E5 100%)",
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}>
-                <span style={{ fontSize: "14px" }}>🍅</span>
-              </div>
-              <div>
-                <p style={{ fontSize: "11px", color: "#999", marginBottom: "2px" }}>总番茄数</p>
-                <p style={{ fontSize: "14px", fontWeight: "600", color: "#2C2C2C" }}>{stats.totalCount}</p>
-              </div>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px", background: "#f8f8f8", borderRadius: "6px" }}>
-              <div style={{
-                width: "28px",
-                height: "28px",
-                background: "linear-gradient(135deg, #FFE5E5 0%, #FFF0E5 100%)",
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}>
-                <span style={{ fontSize: "14px" }}>⏱</span>
-              </div>
-              <div>
-                <p style={{ fontSize: "11px", color: "#999", marginBottom: "2px" }}>总专注时长</p>
-                <p style={{ fontSize: "14px", fontWeight: "600", color: "#2C2C2C" }}>
-                  {stats.totalMinutes > 0 ? (stats.totalMinutes / 60).toFixed(1) + "h" : "0h"}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </>
+      </div>
     );
   };
 
   const tabs: { key: StatsTab; label: string }[] = [
-    { key: "overview", label: "概览" },
+    { key: "overview", label: "今日" },
     { key: "weekly", label: "周报" },
     { key: "monthly", label: "月报" },
   ];
 
   return (
     <div>
-      {/* Tab 切换栏 */}
+      {/* Segmented control */}
       <div style={{
-        display: "flex",
-        background: "#f5f5f5",
-        borderRadius: "10px",
-        padding: "3px",
-        marginBottom: "14px",
+        display: 'flex',
+        background: 'var(--surface-secondary)',
+        borderRadius: 'var(--radius-sm)',
+        padding: '2px',
+        marginBottom: '16px',
+        border: '1px solid var(--border-color)',
       }}>
         {tabs.map((tab) => (
           <button
@@ -358,16 +309,16 @@ export default function StatsPage() {
             onClick={() => setActiveTab(tab.key)}
             style={{
               flex: 1,
-              padding: "8px 0",
-              border: "none",
-              borderRadius: "8px",
-              fontSize: "13px",
-              fontWeight: activeTab === tab.key ? "600" : "400",
-              color: activeTab === tab.key ? "#FF6B6B" : "#999",
-              background: activeTab === tab.key ? "#fff" : "transparent",
-              cursor: "pointer",
-              transition: "all 0.2s ease",
-              boxShadow: activeTab === tab.key ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+              padding: '6px 0',
+              border: 'none',
+              borderRadius: '5px',
+              fontSize: '13px',
+              fontWeight: activeTab === tab.key ? '500' : '400',
+              color: activeTab === tab.key ? 'var(--text-primary)' : 'var(--text-tertiary)',
+              background: activeTab === tab.key ? 'var(--card-bg)' : 'transparent',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+              boxShadow: activeTab === tab.key ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
             }}
           >
             {tab.label}
@@ -375,7 +326,7 @@ export default function StatsPage() {
         ))}
       </div>
 
-      {activeTab === "overview" && renderOverview()}
+      {activeTab === "overview" && renderToday()}
 
       {activeTab === "weekly" && (
         <ReportTab

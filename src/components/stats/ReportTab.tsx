@@ -62,166 +62,160 @@ export default function ReportTab({
 
   return (
     <div>
-      {/* 周期标题 */}
-      <div style={{ marginBottom: "12px", display: "flex", alignItems: "baseline", gap: "8px" }}>
-        <span style={{ fontSize: "14px", fontWeight: "600", color: "#2C2C2C" }}>{title}</span>
-        <span style={{ fontSize: "12px", color: "#999" }}>{dateRange}</span>
+      {/* Period title */}
+      <div style={{ marginBottom: '12px', display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+        <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>{title}</span>
+        <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>{dateRange}</span>
       </div>
 
-      {/* 汇总卡片 */}
-      <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
+      {/* Summary cards */}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
         <div style={{
           flex: 1,
-          background: "linear-gradient(135deg, #FFFFFF 0%, #FFF8F0 100%)",
-          borderRadius: "10px",
-          padding: "14px 10px",
-          textAlign: "center",
-          boxShadow: "0 4px 12px rgba(255, 107, 107, 0.12)",
-          border: "1px solid #FFECE0",
+          background: 'var(--card-bg)',
+          borderRadius: 'var(--radius-md)',
+          padding: '14px 10px',
+          textAlign: 'center',
+          border: '1px solid var(--border-color)',
+          boxShadow: 'none',
         }}>
-          <span style={{ fontSize: "20px", fontWeight: "700", color: "#FF6B6B", display: "block" }}>
+          <span style={{ fontSize: '20px', fontWeight: '600', color: 'var(--text-primary)', display: 'block', fontVariantNumeric: 'tabular-nums' }}>
             {count}
           </span>
-          <span style={{ fontSize: "11px", color: "#666" }}>番茄数</span>
+          <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>番茄数</span>
         </div>
         <div style={{
           flex: 1,
-          background: "linear-gradient(135deg, #FFFFFF 0%, #FFF8F0 100%)",
-          borderRadius: "10px",
-          padding: "14px 10px",
-          textAlign: "center",
-          boxShadow: "0 4px 12px rgba(255, 107, 107, 0.12)",
-          border: "1px solid #FFECE0",
+          background: 'var(--card-bg)',
+          borderRadius: 'var(--radius-md)',
+          padding: '14px 10px',
+          textAlign: 'center',
+          border: '1px solid var(--border-color)',
+          boxShadow: 'none',
         }}>
-          <span style={{ fontSize: "20px", fontWeight: "700", color: "#FF6B6B", display: "block" }}>
+          <span style={{ fontSize: '20px', fontWeight: '600', color: 'var(--text-primary)', display: 'block', fontVariantNumeric: 'tabular-nums' }}>
             {minutes > 0 ? (minutes / 60).toFixed(1) + "h" : "0h"}
           </span>
-          <span style={{ fontSize: "11px", color: "#666" }}>专注时长</span>
+          <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>专注时长</span>
         </div>
         <div style={{
           flex: 1,
-          background: "linear-gradient(135deg, #FFFFFF 0%, #FFF8F0 100%)",
-          borderRadius: "10px",
-          padding: "14px 10px",
-          textAlign: "center",
-          boxShadow: "0 4px 12px rgba(255, 107, 107, 0.12)",
-          border: "1px solid #FFECE0",
+          background: 'var(--card-bg)',
+          borderRadius: 'var(--radius-md)',
+          padding: '14px 10px',
+          textAlign: 'center',
+          border: '1px solid var(--border-color)',
+          boxShadow: 'none',
         }}>
-          <span style={{ fontSize: "20px", fontWeight: "700", color: "#FF6B6B", display: "block" }}>
+          <span style={{ fontSize: '20px', fontWeight: '600', color: 'var(--text-primary)', display: 'block', fontVariantNumeric: 'tabular-nums' }}>
             {streakDays}
           </span>
-          <span style={{ fontSize: "11px", color: "#666" }}>连续天数</span>
+          <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>连续天数</span>
         </div>
       </div>
 
-      {/* 任务完成概要 */}
+      {/* Task completion overview */}
       <div style={{
-        background: "linear-gradient(135deg, #FFFFFF 0%, #FFF8F0 100%)",
-        borderRadius: "10px",
-        padding: "12px 16px",
-        boxShadow: "0 2px 6px rgba(0, 0, 0, 0.05)",
-        border: "1px solid #FFECE0",
-        marginBottom: "12px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
+        background: 'var(--card-bg)',
+        borderRadius: 'var(--radius-md)',
+        padding: '12px 16px',
+        border: '1px solid var(--border-color)',
+        boxShadow: 'none',
+        marginBottom: '12px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <span style={{ fontSize: "16px" }}>📋</span>
-          <span style={{ fontSize: "13px", fontWeight: "600", color: "#2C2C2C" }}>任务完成情况</span>
-        </div>
-        <div style={{ display: "flex", gap: "12px", fontSize: "12px" }}>
-          <span style={{ color: "#4CAF50" }}>已完成 {completedTasks}</span>
-          <span style={{ color: "#FF9800" }}>进行中 {incompleteTasks}</span>
+        <span style={{ fontSize: '13px', fontWeight: '500', color: 'var(--text-primary)' }}>任务完成情况</span>
+        <div style={{ display: 'flex', gap: '12px', fontSize: '12px' }}>
+          <span style={{ color: 'var(--success-color)' }}>已完成 {completedTasks}</span>
+          <span style={{ color: 'var(--warning-color)' }}>进行中 {incompleteTasks}</span>
         </div>
       </div>
 
-      {/* 每日柱状图 */}
-      <div className="card chart-section" style={{ padding: "14px" }}>
-        <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
-          <div style={{
-            fontSize: "16px",
-            marginRight: "6px",
-            width: "24px",
-            height: "24px",
-            background: "linear-gradient(135deg, #FFE5E5 0%, #FFF0E5 100%)",
-            borderRadius: "50%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            lineHeight: "1",
-          }}>
-            📈
-          </div>
-          <span style={{ fontSize: "14px", fontWeight: "600", color: "#2C2C2C" }}>
+      {/* Daily bar chart */}
+      <div style={{
+        background: 'var(--card-bg)',
+        borderRadius: 'var(--radius-md)',
+        padding: '14px',
+        border: '1px solid var(--border-color)',
+        boxShadow: 'none',
+      }}>
+        <div style={{ marginBottom: '12px' }}>
+          <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>
             {isWeekly ? "每日专注" : "本月每日专注"}
           </span>
         </div>
 
         <div style={{
-          borderRadius: "8px",
-          padding: "12px 4px 10px",
-          background: "#fafafa",
-          border: "1px solid #f0f0f0",
+          borderRadius: 'var(--radius-sm)',
+          padding: '12px 4px 10px',
+          background: 'var(--surface-secondary)',
+          border: '1px solid var(--border-subtle)',
         }}>
+          {/* Bar area */}
           <div style={{
-            display: "flex",
-            alignItems: "flex-end",
-            justifyContent: "space-between",
-            height: "160px",
+            display: 'flex',
+            alignItems: 'flex-end',
+            height: isWeekly ? '148px' : '130px',
           }}>
             {chartData.map((data) => (
               <div key={data.date} style={{
                 flex: 1,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                height: "100%",
-                padding: "0 1px",
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'flex-end',
+                height: '100%',
+                padding: '0 1px',
               }}>
-                <div style={{
-                  flex: 1,
-                  width: "100%",
-                  display: "flex",
-                  alignItems: "flex-end",
-                  justifyContent: "center",
-                  height: "100%",
-                }}>
-                  {data.mins > 0 && (
-                    <div style={{
-                      width: barWidth,
-                      minHeight: "6px",
-                      background: "linear-gradient(180deg, #FF6B6B 0%, #FFA94D 100%)",
-                      borderRadius: isWeekly ? "6px 6px 0 0" : "3px 3px 0 0",
-                      position: "relative",
-                      display: "flex",
-                      alignItems: "flex-start",
-                      justifyContent: "center",
-                      transition: "height 0.5s ease",
-                      boxShadow: "0 2px 6px rgba(255, 107, 107, 0.25)",
-                      height: `${Math.max(data.height, 6)}%`,
-                    }}>
-                      {isWeekly && (
-                        <span style={{
-                          position: "absolute",
-                          top: "-14px",
-                          fontSize: "11px",
-                          color: "#FF6B6B",
-                          fontWeight: "700",
-                          textShadow: "0 1px 2px rgba(255, 255, 255, 0.8)",
-                        }}>
-                          {data.hours}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
+                {data.mins > 0 && (
+                  <div style={{
+                    width: barWidth,
+                    minHeight: '6px',
+                    background: 'var(--accent-color)',
+                    borderRadius: isWeekly ? '4px 4px 0 0' : '2px 2px 0 0',
+                    position: 'relative',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    justifyContent: 'center',
+                    transition: 'height 0.5s ease',
+                    height: `${Math.max(data.height, 6)}%`,
+                  }}>
+                    {(isWeekly || data.mins > 0) && (
+                      <span style={{
+                        position: 'absolute',
+                        top: isWeekly ? '-14px' : '-12px',
+                        fontSize: isWeekly ? '10px' : '8px',
+                        color: 'var(--text-secondary)',
+                        fontWeight: '500',
+                        whiteSpace: 'nowrap',
+                      }}>
+                        {data.hours}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          {/* Label area — separate row with same flex columns guarantees alignment */}
+          <div style={{
+            display: 'flex',
+            marginTop: '8px',
+          }}>
+            {chartData.map((data) => (
+              <div key={data.date} style={{
+                flex: 1,
+                textAlign: 'center',
+                padding: '0 1px',
+                height: isWeekly ? '14px' : '12px',
+                lineHeight: isWeekly ? '14px' : '12px',
+              }}>
                 {data.shortLabel && (
                   <span style={{
-                    fontSize: isWeekly ? "10px" : "9px",
-                    color: "#666",
-                    marginTop: "8px",
-                    fontWeight: "500",
+                    fontSize: isWeekly ? '10px' : '9px',
+                    color: 'var(--text-tertiary)',
+                    fontWeight: '400',
                   }}>
                     {data.shortLabel}
                   </span>
@@ -232,71 +226,58 @@ export default function ReportTab({
         </div>
       </div>
 
-      {/* 任务投入明细 */}
+      {/* Task breakdown */}
       {taskBreakdown.length > 0 && (
         <div style={{
-          background: "linear-gradient(135deg, #FFFFFF 0%, #FFF8F0 100%)",
-          borderRadius: "10px",
-          padding: "12px 16px",
-          boxShadow: "0 2px 6px rgba(0, 0, 0, 0.05)",
-          border: "1px solid #FFECE0",
-          marginTop: "12px",
+          background: 'var(--card-bg)',
+          borderRadius: 'var(--radius-md)',
+          padding: '14px 16px',
+          border: '1px solid var(--border-color)',
+          boxShadow: 'none',
+          marginTop: '12px',
         }}>
-          <div style={{ display: "flex", alignItems: "center", marginBottom: "10px" }}>
-            <div style={{
-              fontSize: "16px",
-              marginRight: "6px",
-              width: "24px",
-              height: "24px",
-              background: "linear-gradient(135deg, #FFE5E5 0%, #FFF0E5 100%)",
-              borderRadius: "50%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              lineHeight: "1",
-            }}>
-              🍅
-            </div>
-            <span style={{ fontSize: "14px", fontWeight: "600", color: "#2C2C2C" }}>任务投入明细</span>
+          <div style={{ marginBottom: '10px' }}>
+            <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>任务投入明细</span>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {taskBreakdown.map((task) => (
               <div key={task.taskId} style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "8px 10px",
-                background: "#f8f8f8",
-                borderRadius: "6px",
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '8px 10px',
+                background: 'var(--surface-secondary)',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--border-subtle)',
               }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
                   <span style={{
-                    fontSize: "11px",
-                    padding: "2px 6px",
-                    borderRadius: "4px",
-                    background: task.isCompleted ? "rgba(76, 175, 80, 0.1)" : "rgba(255, 152, 0, 0.1)",
-                    color: task.isCompleted ? "#4CAF50" : "#FF9800",
-                    fontWeight: "600",
-                    whiteSpace: "nowrap",
+                    fontSize: '11px',
+                    padding: '1px 6px',
+                    borderRadius: '4px',
+                    background: task.isCompleted ? 'rgba(52, 199, 89, 0.08)' : 'rgba(255, 149, 0, 0.08)',
+                    color: task.isCompleted ? 'var(--success-color)' : 'var(--warning-color)',
+                    fontWeight: '500',
+                    whiteSpace: 'nowrap',
                   }}>
                     {task.isCompleted ? "已完成" : "进行中"}
                   </span>
                   <span style={{
-                    fontSize: "13px",
-                    color: "#2C2C2C",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
+                    fontSize: '13px',
+                    color: 'var(--text-primary)',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
                   }}>
                     {task.taskName}
                   </span>
                 </div>
-                <div style={{ display: "flex", alignItems: "baseline", gap: "10px", flexShrink: 0 }}>
-                  <span style={{ fontSize: "12px", color: "#666" }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', flexShrink: 0 }}>
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
                     {task.pomodoroCount} 番茄
                   </span>
-                  <span style={{ fontSize: "12px", color: "#999" }}>
+                  <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontVariantNumeric: 'tabular-nums' }}>
                     {task.focusMinutes > 0 ? (task.focusMinutes / 60).toFixed(1) + "h" : "0h"}
                   </span>
                 </div>

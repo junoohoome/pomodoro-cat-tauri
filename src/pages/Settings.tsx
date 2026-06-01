@@ -3,26 +3,17 @@ import { invoke } from "@tauri-apps/api/core";
 import { useUserStore } from "../stores/userStore";
 import { useTestModeStore } from "../stores/testModeStore";
 
-const cardStyle: React.CSSProperties = {
-  background: 'var(--card-gradient)',
-  borderRadius: '12px',
-  padding: '20px',
-  marginBottom: '16px',
-  boxShadow: 'var(--card-shadow)',
-  border: '1px solid var(--border-color)',
-};
-
 function ToggleSwitch({ enabled, onChange }: { enabled: boolean; onChange: () => void }) {
   return (
     <button
       onClick={onChange}
       style={{
         position: 'relative',
-        width: '56px',
-        height: '30px',
-        borderRadius: '15px',
-        background: enabled ? 'var(--primary-gradient)' : 'var(--toggle-off-bg)',
-        transition: 'all 0.3s ease',
+        width: '44px',
+        height: '26px',
+        borderRadius: '13px',
+        background: enabled ? 'var(--toggle-on-bg)' : 'var(--toggle-off-bg)',
+        transition: 'background 0.2s ease',
         cursor: 'pointer',
         border: 'none',
         padding: 0,
@@ -31,14 +22,14 @@ function ToggleSwitch({ enabled, onChange }: { enabled: boolean; onChange: () =>
     >
       <span style={{
         position: 'absolute',
-        top: '3px',
-        left: enabled ? '29px' : '3px',
-        width: '24px',
-        height: '24px',
+        top: '2px',
+        left: enabled ? '22px' : '2px',
+        width: '22px',
+        height: '22px',
         borderRadius: '50%',
         background: 'var(--switch-knob-bg)',
-        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-        transition: 'all 0.3s ease',
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.15)',
+        transition: 'left 0.2s ease',
       }} />
     </button>
   );
@@ -49,12 +40,12 @@ function NumberInput({ label, hint, value, min, max, unit, onChange }: {
   onChange: (val: number) => void;
 }) {
   return (
-    <div style={{ marginBottom: '20px' }}>
-      <div style={{ marginBottom: '8px' }}>
-        <span style={{ fontSize: '14px', color: 'var(--text-color)', fontWeight: '500' }}>{label}</span>
-        <span style={{ fontSize: '12px', color: 'var(--subtle-color)', marginLeft: '8px' }}>{hint}</span>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: '1px solid var(--border-subtle)' }}>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: '400' }}>{label}</div>
+        {hint && <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '2px' }}>{hint}</div>}
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
         <input
           type="number"
           min={min}
@@ -62,40 +53,39 @@ function NumberInput({ label, hint, value, min, max, unit, onChange }: {
           value={value}
           onChange={(e) => onChange(parseInt(e.target.value) || min)}
           style={{
-            width: '80px',
-            padding: '8px 12px',
-            fontSize: '14px',
+            width: '64px',
+            padding: '6px 8px',
+            fontSize: '13px',
             border: '1px solid var(--input-border)',
-            borderRadius: '8px',
+            borderRadius: 'var(--radius-sm)',
             background: 'var(--input-bg)',
-            color: 'var(--text-color)',
+            color: 'var(--text-primary)',
+            textAlign: 'center',
+            outline: 'none',
           }}
         />
-        <span style={{ fontSize: '14px', color: 'var(--muted-color)' }}>{unit}</span>
+        <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>{unit}</span>
       </div>
     </div>
   );
 }
 
-function ToggleRow({ label, hint, enabled, onChange }: {
-  label: string; hint: string; enabled: boolean; onChange: () => void;
+function ToggleRow({ label, hint, enabled, onChange, last }: {
+  label: string; hint: string; enabled: boolean; onChange: () => void; last?: boolean;
 }) {
   return (
-    <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: '12px 16px',
+      borderBottom: last ? 'none' : '1px solid var(--border-subtle)',
+    }}>
       <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: '14px', color: 'var(--text-color)', marginBottom: '4px' }}>{label}</div>
-        {hint && <div style={{ fontSize: '12px', color: 'var(--subtle-color)' }}>{hint}</div>}
+        <div style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{label}</div>
+        {hint && <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '2px' }}>{hint}</div>}
       </div>
       <ToggleSwitch enabled={enabled} onChange={onChange} />
-    </div>
-  );
-}
-
-function SectionHeader({ emoji, title }: { emoji: string; title: string }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-      <span style={{ fontSize: '20px' }}>{emoji}</span>
-      <h3 style={{ fontSize: '16px', fontWeight: '600', color: 'var(--text-color)', margin: 0 }}>{title}</h3>
     </div>
   );
 }
@@ -111,80 +101,89 @@ export default function SettingsPage() {
   if (!config) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
-        <span style={{ color: 'var(--subtle-color)' }}>加载中...</span>
+        <span style={{ color: 'var(--text-tertiary)', fontSize: '14px' }}>加载中...</span>
       </div>
     );
   }
 
   return (
     <div style={{ paddingBottom: '24px' }}>
-      <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: '700', color: 'var(--text-color)', marginBottom: '8px' }}>设置</h1>
-        <p style={{ fontSize: '14px', color: 'var(--subtle-color)' }}>自定义你的番茄钟体验</p>
-      </div>
-
-      {/* 计时器 */}
-      <div className="card" style={cardStyle}>
-        <SectionHeader emoji="⏱" title="计时器" />
+      {/* Timer */}
+      <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '6px', marginLeft: '2px' }}>计时器</div>
+      <div style={{
+        background: 'var(--card-bg)',
+        borderRadius: 'var(--radius-lg)',
+        border: '1px solid var(--border-color)',
+        boxShadow: 'none',
+        marginBottom: '20px',
+        overflow: 'hidden',
+      }}>
         <NumberInput label="专注时长" hint="每个番茄钟的专注时间" value={config.focusDuration} min={1} max={120} unit="分钟"
           onChange={(v) => updateConfig({ focusDuration: v })} />
         <NumberInput label="休息时长" hint="番茄钟之间的短休息" value={config.breakDuration} min={1} max={30} unit="分钟"
           onChange={(v) => updateConfig({ breakDuration: v })} />
         <NumberInput label="长休息时长" hint="每 4 个番茄后的长休息" value={config.longBreakDuration} min={1} max={60} unit="分钟"
           onChange={(v) => updateConfig({ longBreakDuration: v })} />
-        <div style={{ marginBottom: 0 }}>
-          <ToggleRow label="自动开始" hint="休息结束后自动开始下一个番茄钟" enabled={config.autoStart}
-            onChange={() => updateConfig({ autoStart: !config.autoStart })} />
-        </div>
+        <ToggleRow label="自动开始" hint="休息结束后自动开始下一个番茄钟" enabled={config.autoStart}
+          onChange={() => updateConfig({ autoStart: !config.autoStart })} last />
       </div>
 
-      {/* 每日目标 */}
-      <div className="card" style={cardStyle}>
-        <SectionHeader emoji="🎯" title="每日目标" />
-        <div style={{ marginBottom: '20px' }}>
-          <ToggleRow label="显示每日目标" hint="在主页显示今日目标进度条" enabled={config.showDailyGoal}
-            onChange={() => updateConfig({ showDailyGoal: !config.showDailyGoal })} />
-        </div>
+      {/* Daily goal */}
+      <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '6px', marginLeft: '2px' }}>每日目标</div>
+      <div style={{
+        background: 'var(--card-bg)',
+        borderRadius: 'var(--radius-lg)',
+        border: '1px solid var(--border-color)',
+        boxShadow: 'none',
+        marginBottom: '20px',
+        overflow: 'hidden',
+      }}>
+        <ToggleRow label="显示每日目标" hint="在主页显示今日目标进度条" enabled={config.showDailyGoal}
+          onChange={() => updateConfig({ showDailyGoal: !config.showDailyGoal })} last={!config.showDailyGoal} />
         {config.showDailyGoal && (
-          <div style={{ marginBottom: 0 }}>
-            <NumberInput label="每日番茄目标" hint="每天计划完成的番茄数" value={config.dailyGoal} min={1} max={30} unit="个"
-              onChange={(v) => updateConfig({ dailyGoal: v })} />
-          </div>
+          <NumberInput label="每日番茄目标" hint="每天计划完成的番茄数" value={config.dailyGoal} min={1} max={30} unit="个"
+            onChange={(v) => updateConfig({ dailyGoal: v })} />
+        )}
+        {config.showDailyGoal && (
+          <div style={{ borderBottom: 'none' }} />
         )}
       </div>
 
-      {/* 通知与提醒 */}
-      <div className="card" style={cardStyle}>
-        <SectionHeader emoji="🔔" title="通知与提醒" />
+      {/* Notifications */}
+      <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '6px', marginLeft: '2px' }}>通知与提醒</div>
+      <div style={{
+        background: 'var(--card-bg)',
+        borderRadius: 'var(--radius-lg)',
+        border: '1px solid var(--border-color)',
+        boxShadow: 'none',
+        marginBottom: '20px',
+        overflow: 'hidden',
+      }}>
         <ToggleRow label="启用通知" hint="计时结束时发送系统通知" enabled={config.enableNotifications}
           onChange={() => updateConfig({ enableNotifications: !config.enableNotifications })} />
-        <div style={{ marginBottom: 0 }}>
-          <ToggleRow label="启用声音" hint="计时结束时播放提示音" enabled={config.enableSound}
-            onChange={() => updateConfig({ enableSound: !config.enableSound })} />
-        </div>
+        <ToggleRow label="启用声音" hint="计时结束时播放提示音" enabled={config.enableSound}
+          onChange={() => updateConfig({ enableSound: !config.enableSound })} last />
       </div>
 
-      {/* 桌面宠物 */}
-      <div className="card" style={{
-        background: 'var(--card-gradient)',
-        borderRadius: '12px',
-        padding: '20px',
-        marginBottom: '16px',
-        boxShadow: 'var(--card-shadow)',
-        border: '1px solid var(--border-color)'
+      {/* Desktop pet */}
+      <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '6px', marginLeft: '2px' }}>桌面宠物</div>
+      <div style={{
+        background: 'var(--card-bg)',
+        borderRadius: 'var(--radius-lg)',
+        border: '1px solid var(--border-color)',
+        boxShadow: 'none',
+        marginBottom: '20px',
+        overflow: 'hidden',
       }}>
-        <div style={{ marginBottom: '20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-            <span style={{ fontSize: '20px' }}>🐱</span>
-            <h3 style={{ fontSize: '16px', fontWeight: '600', color: 'var(--text-color)', margin: 0 }}>桌面宠物</h3>
-          </div>
-          <p style={{ fontSize: '13px', color: 'var(--muted-color)', margin: 0 }}>在桌面上显示一只小猫咪，跟随番茄钟状态变化</p>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '12px 16px',
+        }}>
           <div>
-            <div style={{ fontSize: '14px', color: 'var(--text-color)', marginBottom: '4px' }}>显示桌面宠物</div>
-            <div style={{ fontSize: '12px', color: 'var(--subtle-color)' }}>快捷键 Cmd+Shift+P 切换</div>
+            <div style={{ fontSize: '13px', color: 'var(--text-primary)' }}>显示桌面宠物</div>
+            <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '2px' }}>在桌面上显示小猫咪，跟随番茄钟状态变化</div>
           </div>
           <button
             onClick={async () => {
@@ -200,74 +199,86 @@ export default function SettingsPage() {
             }}
             style={{
               position: 'relative',
-              width: '56px',
-              height: '30px',
-              borderRadius: '15px',
-              background: config.showDesktopPet ? 'var(--primary-gradient)' : 'var(--toggle-off-bg)',
-              transition: 'all 0.3s ease',
+              width: '44px',
+              height: '26px',
+              borderRadius: '13px',
+              background: config.showDesktopPet ? 'var(--toggle-on-bg)' : 'var(--toggle-off-bg)',
+              transition: 'background 0.2s ease',
               cursor: 'pointer',
               border: 'none',
-              padding: 0
+              padding: 0,
+              flexShrink: 0,
             }}
           >
             <span style={{
               position: 'absolute',
-              top: '3px',
-              left: config.showDesktopPet ? '29px' : '3px',
-              width: '24px',
-              height: '24px',
+              top: '2px',
+              left: config.showDesktopPet ? '22px' : '2px',
+              width: '22px',
+              height: '22px',
               borderRadius: '50%',
               background: 'var(--switch-knob-bg)',
-              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-              transition: 'all 0.3s ease'
-            }}></span>
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.15)',
+              transition: 'left 0.2s ease',
+            }} />
           </button>
         </div>
       </div>
 
-      {/* 外观主题 */}
-      <div className="card" style={cardStyle}>
-        <SectionHeader emoji="🎨" title="外观主题" />
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+      {/* Theme */}
+      <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '6px', marginLeft: '2px' }}>外观主题</div>
+      <div style={{
+        background: 'var(--card-bg)',
+        borderRadius: 'var(--radius-lg)',
+        border: '1px solid var(--border-color)',
+        boxShadow: 'none',
+        marginBottom: '20px',
+        padding: '16px',
+      }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
           {[
-            { value: 'light', icon: '☀️', label: '浅色', desc: '明亮清爽' },
-            { value: 'dark', icon: '🌙', label: '深色', desc: '护眼舒适' },
-            { value: 'auto', icon: '🔄', label: '跟随系统', desc: '自动切换' },
+            { value: 'light', label: '浅色', desc: '明亮清爽' },
+            { value: 'dark', label: '深色', desc: '护眼舒适' },
+            { value: 'auto', label: '跟随系统', desc: '自动切换' },
           ].map((theme) => (
             <button
               key={theme.value}
               onClick={() => updateConfig({ theme: theme.value as any })}
               style={{
-                padding: '16px 12px',
-                borderRadius: '10px',
-                border: config.theme === theme.value ? '2px solid var(--primary-color)' : '1px solid var(--input-border)',
-                background: config.theme === theme.value ? 'var(--active-bg)' : 'var(--card-bg)',
+                padding: '12px 8px',
+                borderRadius: 'var(--radius-md)',
+                border: config.theme === theme.value ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
+                background: config.theme === theme.value ? 'var(--accent-light)' : 'var(--card-bg)',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: '8px',
+                gap: '4px',
                 cursor: 'pointer',
-                transition: 'all 0.3s ease',
+                transition: 'all 0.15s ease',
               }}
             >
-              <span style={{ fontSize: '28px' }}>{theme.icon}</span>
-              <span style={{ fontSize: '13px', fontWeight: '500', color: 'var(--text-color)' }}>{theme.label}</span>
-              <span style={{ fontSize: '11px', color: 'var(--subtle-color)' }}>{theme.desc}</span>
+              <span style={{ fontSize: '13px', fontWeight: '500', color: config.theme === theme.value ? 'var(--accent-color)' : 'var(--text-primary)' }}>{theme.label}</span>
+              <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>{theme.desc}</span>
             </button>
           ))}
         </div>
       </div>
 
-      {/* 系统 */}
-      <div className="card" style={cardStyle}>
-        <SectionHeader emoji="🖥" title="系统" />
-        <div style={{ marginBottom: 0 }}>
-          <ToggleRow label="开机启动" hint="登录系统时自动启动并最小化到托盘" enabled={config.autoLaunch}
-            onChange={() => toggleAutoLaunch(!config.autoLaunch)} />
-        </div>
+      {/* System */}
+      <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '6px', marginLeft: '2px' }}>系统</div>
+      <div style={{
+        background: 'var(--card-bg)',
+        borderRadius: 'var(--radius-lg)',
+        border: '1px solid var(--border-color)',
+        boxShadow: 'none',
+        marginBottom: '20px',
+        overflow: 'hidden',
+      }}>
+        <ToggleRow label="开机启动" hint="登录系统时自动启动并最小化到托盘" enabled={config.autoLaunch}
+          onChange={() => toggleAutoLaunch(!config.autoLaunch)} last />
       </div>
 
-      {/* 恢复默认 */}
+      {/* Reset */}
       <button
         onClick={async () => {
           if (confirm('确定要恢复所有设置为默认值吗？')) {
@@ -277,30 +288,48 @@ export default function SettingsPage() {
         }}
         style={{
           width: '100%',
-          padding: '14px',
-          borderRadius: '12px',
+          padding: '10px',
+          borderRadius: 'var(--radius-md)',
           border: '1px solid var(--border-color)',
-          background: 'var(--card-gradient)',
-          color: 'var(--primary-color)',
-          fontSize: '14px',
-          fontWeight: '600',
+          background: 'transparent',
+          color: 'var(--text-secondary)',
+          fontSize: '13px',
+          fontWeight: '500',
           cursor: 'pointer',
-          boxShadow: 'var(--card-shadow)',
-          transition: 'all 0.3s ease',
+          boxShadow: 'none',
+          transition: 'all 0.15s ease',
           marginBottom: '16px',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = 'var(--surface-secondary)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'transparent';
         }}
       >
         恢复默认设置
       </button>
 
-      {/* 测试模式（仅开发环境） */}
+      {/* Test mode (dev only) */}
       {import.meta.env.DEV && (
-        <div className="card" style={cardStyle}>
-          <SectionHeader emoji="🧪" title="测试模式" />
-          <p style={{ fontSize: '13px', color: 'var(--muted-color)', margin: '0 0 12px' }}>快速测试功能，使用1分钟代替正常时长</p>
-          <ToggleRow label={isTestMode ? '测试模式已开启' : '测试模式已关闭'} hint="" enabled={isTestMode}
-            onChange={() => setIsTestMode(!isTestMode)} />
-        </div>
+        <>
+          <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '6px', marginLeft: '2px' }}>开发者</div>
+          <div style={{
+            background: 'var(--card-bg)',
+            borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--border-color)',
+            boxShadow: 'none',
+            overflow: 'hidden',
+          }}>
+            <ToggleRow
+              label={isTestMode ? '测试模式已开启' : '测试模式已关闭'}
+              hint="使用1分钟代替正常时长"
+              enabled={isTestMode}
+              onChange={() => setIsTestMode(!isTestMode)}
+              last
+            />
+          </div>
+        </>
       )}
     </div>
   );

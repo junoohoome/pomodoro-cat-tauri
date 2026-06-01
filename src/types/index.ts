@@ -84,6 +84,13 @@ export interface Stats {
   totalMinutes: number;
   dailyData: DailyStats[];
 
+  // 今日报告数据
+  todayCompletedTasks: number;
+  todayIncompleteTasks: number;
+  todayTaskBreakdown: TaskReportItem[];
+  todayHourlyData: HourlySegment[];
+  dailyGoal: number;
+
   // 周报数据
   weekStartDate: string;
   weekEndDate: string;
@@ -108,6 +115,14 @@ export interface Stats {
 // 每日统计
 export interface DailyStats {
   date: string;               // YYYY-MM-DD
+  count: number;
+  minutes: number;
+}
+
+// 时段统计（今日报告用）
+export interface HourlySegment {
+  label: string;              // "上午", "下午", "晚上", "深夜"
+  startHour: number;
   count: number;
   minutes: number;
 }

@@ -180,6 +180,13 @@ pub struct Stats {
     pub total_minutes: i32,
     pub daily_data: Vec<DailyStats>,
 
+    // 今日报告数据
+    pub today_completed_tasks: i32,
+    pub today_incomplete_tasks: i32,
+    pub today_task_breakdown: Vec<TaskReportItem>,
+    pub today_hourly_data: Vec<HourlySegment>,
+    pub daily_goal: i32,
+
     // 周报数据
     pub week_start_date: String,
     pub week_end_date: String,
@@ -205,6 +212,16 @@ pub struct Stats {
 #[serde(rename_all = "camelCase")]
 pub struct DailyStats {
     pub date: String,
+    pub count: i32,
+    pub minutes: i32,
+}
+
+// 时段统计（今日报告用）
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct HourlySegment {
+    pub label: String,    // "上午", "下午", "晚上", "深夜"
+    pub start_hour: i32,  // 6, 12, 18, 0
     pub count: i32,
     pub minutes: i32,
 }

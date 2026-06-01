@@ -30,7 +30,6 @@ export default function TimerPage() {
   const { config, fetchConfig, userData, stats, fetchStats } = useUserStore();
   const { isTestMode } = useTestModeStore();
 
-  // 测试模式下的时长：1分钟专注，1分钟休息
   const TEST_FOCUS_DURATION = 1;
   const TEST_BREAK_DURATION = 1;
 
@@ -40,7 +39,6 @@ export default function TimerPage() {
     fetchStats();
   }, [fetchConfig, fetchActiveTasks, fetchStats]);
 
-  // 同步测试模式到 timerStore
   useEffect(() => {
     setTestMode(isTestMode);
   }, [isTestMode, setTestMode]);
@@ -67,7 +65,6 @@ export default function TimerPage() {
     return labels[priority as keyof typeof labels] || labels.medium;
   };
 
-  // 根据测试模式选择时长
   const focusDuration = isTestMode ? TEST_FOCUS_DURATION : (config?.focusDuration || 25);
   const breakDuration = isTestMode ? TEST_BREAK_DURATION : (config?.breakDuration || 5);
   const longBreakDuration = isTestMode ? TEST_BREAK_DURATION : (config?.longBreakDuration || 15);
@@ -75,121 +72,121 @@ export default function TimerPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
-      {/* 右下角测试模式标记（仅开发环境） */}
+      {/* Test mode badge (dev only) */}
       {import.meta.env.DEV && isTestMode && (
         <div style={{
           position: 'fixed',
           bottom: '20px',
           right: '20px',
-          background: 'rgba(255, 107, 107, 0.9)',
-          color: '#fff',
-          padding: '8px 16px',
-          borderRadius: '15px',
-          fontSize: '14px',
-          fontWeight: 'bold',
+          background: 'var(--surface-bg)',
+          color: 'var(--text-secondary)',
+          padding: '6px 12px',
+          borderRadius: 'var(--radius-sm)',
+          fontSize: '12px',
+          fontWeight: '500',
           zIndex: 100,
-          boxShadow: '0 4px 12px rgba(255, 107, 107, 0.4)',
-          animation: 'pulse 2s infinite'
+          border: '1px solid var(--border-color)',
         }}>
           测试模式
         </div>
       )}
 
-      {/* 猫咪展示 */}
-      <div className="cat-display" style={{ textAlign: 'center', marginBottom: '24px' }}>
-        <span className={`cat-emoji ${state === 'running' ? 'cat-breathing' : ''}`} style={{
-          fontSize: '80px',
+      {/* Cat display */}
+      <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+        <span className={state === 'running' ? 'cat-breathing' : ''} style={{
+          fontSize: '64px',
           lineHeight: '1',
           display: 'block',
-          marginBottom: '8px',
           transition: 'transform 0.3s ease'
         }}>{catEmoji}</span>
       </div>
 
-      {/* 圆形计时器 */}
-      <div className="timer-container" style={{
+      {/* Circular timer */}
+      <div style={{
         position: 'relative',
-        width: '210px',
-        height: '210px',
+        width: '200px',
+        height: '200px',
         marginBottom: '24px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
       }}>
-        {/* SVG 进度条 */}
+        {/* SVG progress ring */}
         <svg
           style={{
             position: 'absolute',
             top: 0,
             left: 0,
-            width: '210px',
-            height: '210px',
+            width: '200px',
+            height: '200px',
             transform: 'rotate(-90deg)',
             zIndex: 2,
           }}
-          viewBox="0 0 210 210"
+          viewBox="0 0 200 200"
         >
-          {/* 背景圆环 */}
+          {/* Background ring */}
           <circle
-            cx="105"
-            cy="105"
-            r="100"
+            cx="100"
+            cy="100"
+            r="94"
             fill="none"
-            stroke="#FFECE0"
+            stroke="var(--border-color)"
             strokeWidth="3"
             strokeLinecap="round"
           />
-          {/* 进度圆环 */}
+          {/* Progress ring */}
           <circle
-            cx="105"
-            cy="105"
-            r="100"
+            cx="100"
+            cy="100"
+            r="94"
             fill="none"
-            stroke="#FF6B6B"
+            stroke="var(--accent-color)"
             strokeWidth="3"
             strokeLinecap="round"
-            strokeDasharray={2 * Math.PI * 100}
-            strokeDashoffset={2 * Math.PI * 100 * (1 - remainingSeconds / totalSeconds)}
+            strokeDasharray={2 * Math.PI * 94}
+            strokeDashoffset={2 * Math.PI * 94 * (1 - remainingSeconds / totalSeconds)}
             style={{
               transition: state === 'running' ? 'stroke-dashoffset 1s linear' : 'stroke-dashoffset 0.3s ease',
             }}
           />
         </svg>
 
-        {/* 计时器主体 */}
+        {/* Timer body */}
         <div style={{
-          width: '200px',
-          height: '200px',
-          background: 'linear-gradient(135deg, #FFFFFF 0%, #FFF8F0 100%)',
+          width: '188px',
+          height: '188px',
+          background: 'var(--card-bg)',
           borderRadius: '50%',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 4px 16px rgba(255, 107, 107, 0.2)',
+          boxShadow: 'var(--shadow-sm)',
+          border: '1px solid var(--border-color)',
           position: 'relative',
           zIndex: 1,
         }}>
-          <div className="timer-inner" style={{ textAlign: 'center' }}>
-            <span className="timer-time" style={{
-              fontSize: '48px',
-              fontWeight: '700',
-              color: '#FF6B6B',
+          <div style={{ textAlign: 'center' }}>
+            <span style={{
+              fontSize: '44px',
+              fontWeight: '600',
+              color: 'var(--text-primary)',
               lineHeight: '1',
               display: 'block',
-              marginBottom: '8px',
-              letterSpacing: '0.05em'
+              marginBottom: '6px',
+              letterSpacing: '0.02em',
+              fontVariantNumeric: 'tabular-nums',
             }}>{formatTime(remainingSeconds)}</span>
-            <span className="timer-label" style={{ fontSize: '14px', color: '#999' }}>
+            <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '400' }}>
               {type === "focus" ? "专注" : "休息"}
             </span>
           </div>
         </div>
       </div>
 
-      {/* 控制按钮 */}
-      <div className="control-buttons" style={{
+      {/* Control buttons */}
+      <div style={{
         display: 'flex',
-        gap: '12px',
+        gap: '8px',
         marginBottom: '16px',
         position: 'relative',
         zIndex: 10,
@@ -201,9 +198,9 @@ export default function TimerPage() {
             className="btn btn-primary"
             style={{
               minWidth: '80px',
-              height: '44px',
-              padding: '0 16px',
-              fontSize: '14px'
+              height: '36px',
+              padding: '0 20px',
+              fontSize: '13px'
             }}
           >
             开始
@@ -216,9 +213,9 @@ export default function TimerPage() {
               className="btn btn-primary"
               style={{
                 minWidth: '80px',
-                height: '44px',
-                padding: '0 16px',
-                fontSize: '14px'
+                height: '36px',
+                padding: '0 20px',
+                fontSize: '13px'
               }}
             >
               开始
@@ -227,10 +224,10 @@ export default function TimerPage() {
               onClick={switchToFocus}
               className="btn btn-outline"
               style={{
-                minWidth: '80px',
-                height: '44px',
+                minWidth: '70px',
+                height: '36px',
                 padding: '0 16px',
-                fontSize: '14px'
+                fontSize: '13px'
               }}
             >
               跳过
@@ -242,14 +239,14 @@ export default function TimerPage() {
             <button
               onClick={pause}
               className="btn btn-secondary"
-              style={{ minWidth: '80px', height: '44px', padding: '0 16px', fontSize: '14px' }}
+              style={{ minWidth: '80px', height: '36px', padding: '0 20px', fontSize: '13px' }}
             >
               暂停
             </button>
             <button
               onClick={stop}
               className="btn btn-outline"
-              style={{ minWidth: '70px', height: '44px', padding: '0 16px', fontSize: '14px' }}
+              style={{ minWidth: '70px', height: '36px', padding: '0 16px', fontSize: '13px' }}
             >
               放弃
             </button>
@@ -259,15 +256,15 @@ export default function TimerPage() {
           <>
             <button
               onClick={resume}
-              className="btn btn-secondary"
-              style={{ minWidth: '80px', height: '44px', padding: '0 16px', fontSize: '14px' }}
+              className="btn btn-primary"
+              style={{ minWidth: '80px', height: '36px', padding: '0 20px', fontSize: '13px' }}
             >
               继续
             </button>
             <button
               onClick={stop}
               className="btn btn-outline"
-              style={{ minWidth: '70px', height: '44px', padding: '0 16px', fontSize: '14px' }}
+              style={{ minWidth: '70px', height: '36px', padding: '0 16px', fontSize: '13px' }}
             >
               放弃
             </button>
@@ -275,54 +272,54 @@ export default function TimerPage() {
         )}
       </div>
 
-      {/* 当前任务显示 */}
+      {/* Current task */}
       {currentTask && (
-        <div className="current-task-display" style={{
+        <div style={{
           width: '100%',
           marginTop: '16px',
-          padding: '14px 16px',
-          background: 'linear-gradient(135deg, #FFFFFF 0%, #FFF8F0 100%)',
-          borderRadius: '9px',
-          border: '1px solid #FFECE0',
-          boxShadow: '0 4px 12px rgba(255, 107, 107, 0.14)',
+          padding: '12px 16px',
+          background: 'var(--card-bg)',
+          borderRadius: 'var(--radius-md)',
+          border: '1px solid var(--border-color)',
+          boxShadow: 'none',
           display: 'flex',
           flexDirection: 'column',
           gap: '6px'
         }}>
-          <div className="task-meta" style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
             <span className={`priority-badge ${getPriorityBadgeClass(currentTask.priority)}`}>
               {getPriorityLabel(currentTask.priority)}
             </span>
-            <span className="task-divider" style={{ fontSize: '10px', color: '#E0E0E0', flexShrink: 0, margin: '0 1px' }}>·</span>
-            <span className="task-progress" style={{ fontSize: '11px', color: '#FF6B6B', fontWeight: '600', flexShrink: 0 }}>
+            <span style={{ fontSize: '10px', color: 'var(--border-color)', flexShrink: 0 }}>·</span>
+            <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '500', flexShrink: 0 }}>
               {currentTask.completedPomodoros}/{currentTask.targetPomodoros} 番茄钟
             </span>
           </div>
-          <span className="task-name" style={{
-            fontSize: '14px',
+          <span style={{
+            fontSize: '13px',
             fontWeight: '400',
-            color: '#999',
+            color: 'var(--text-secondary)',
             lineHeight: '1.45',
             wordBreak: 'break-word'
           }}>{currentTask.name}</span>
         </div>
       )}
 
-      {/* 每日目标进度 */}
+      {/* Daily goal progress */}
       {config && config.showDailyGoal && stats && stats.todayCount < (config.dailyGoal || 4) && (
         <div style={{
           width: '100%',
-          marginTop: '16px',
-          padding: '12px 16px',
-          background: 'var(--card-gradient)',
-          borderRadius: '9px',
+          marginTop: '12px',
+          padding: '10px 16px',
+          background: 'var(--card-bg)',
+          borderRadius: 'var(--radius-md)',
           border: '1px solid var(--border-color)',
-          boxShadow: 'var(--card-shadow)',
+          boxShadow: 'none',
           display: 'flex',
           alignItems: 'center',
           gap: '12px',
         }}>
-          <span style={{ fontSize: '13px', color: 'var(--muted-color)', flexShrink: 0 }}>今日目标</span>
+          <span style={{ fontSize: '12px', color: 'var(--text-secondary)', flexShrink: 0 }}>今日目标</span>
           <div className="progress-bar" style={{ flex: 1 }}>
             <div
               className="progress-fill"
@@ -332,10 +329,11 @@ export default function TimerPage() {
             />
           </div>
           <span style={{
-            fontSize: '13px',
-            fontWeight: '600',
-            color: 'var(--primary-color)',
+            fontSize: '12px',
+            fontWeight: '500',
+            color: 'var(--text-primary)',
             flexShrink: 0,
+            fontVariantNumeric: 'tabular-nums',
           }}>
             {stats.todayCount}/{config.dailyGoal || 4}
           </span>
