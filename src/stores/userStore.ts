@@ -67,6 +67,10 @@ export const useUserStore = create<UserStore>((set, get) => ({
       enableNotifications: updates.enableNotifications,
       enableSound: updates.enableSound,
       theme: updates.theme,
+      longBreakDuration: updates.longBreakDuration,
+      autoStart: updates.autoStart,
+      dailyGoal: updates.dailyGoal,
+      autoLaunch: updates.autoLaunch,
     });
     await get().fetchConfig();
   },

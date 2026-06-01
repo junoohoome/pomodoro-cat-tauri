@@ -40,6 +40,10 @@ export interface UserConfig {
   enableSound: boolean;
   theme: "light" | "dark" | "auto";
   updatedAt: string;
+  longBreakDuration: number;
+  autoStart: boolean;
+  dailyGoal: number;
+  autoLaunch: boolean;
 }
 
 // 番茄钟记录
