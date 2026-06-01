@@ -84,7 +84,7 @@ export const useUserStore = create<UserStore>((set, get) => ({
           level,
           totalCans: stats.totalCount,
           totalMinutes: stats.totalMinutes,
-          streakDays: 0, // TODO: 计算连续天数
+          streakDays: stats.weekStreakDays,
         },
       });
     } finally {
