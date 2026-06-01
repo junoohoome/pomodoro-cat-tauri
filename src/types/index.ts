@@ -44,6 +44,7 @@ export interface UserConfig {
   autoStart: boolean;
   dailyGoal: number;
   autoLaunch: boolean;
+  showDesktopPet: boolean;
 }
 
 // 番茄钟记录

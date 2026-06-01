@@ -74,6 +74,7 @@ export const useUserStore = create<UserStore>((set, get) => ({
       autoStart: updates.autoStart,
       dailyGoal: updates.dailyGoal,
       autoLaunch: updates.autoLaunch,
+      showDesktopPet: updates.showDesktopPet,
     });
     await get().fetchConfig();
   },

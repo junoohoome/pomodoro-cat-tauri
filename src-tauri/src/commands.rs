@@ -175,7 +175,8 @@ pub fn get_user_config(app: AppHandle) -> Result<UserConfig, String> {
          COALESCE(long_break_duration, 15),
          COALESCE(auto_start, 0),
          COALESCE(daily_goal, 8),
-         COALESCE(auto_launch, 0)
+         COALESCE(auto_launch, 0),
+         COALESCE(show_desktop_pet, 0)
          FROM user_config WHERE id = 1",
         [],
         |row| Ok(UserConfig {
@@ -190,6 +191,7 @@ pub fn get_user_config(app: AppHandle) -> Result<UserConfig, String> {
             auto_start: row.get(8)?,
             daily_goal: row.get(9)?,
             auto_launch: row.get(10)?,
+            show_desktop_pet: row.get(11)?,
         }),
     ).map_err(|e| e.to_string())?;
 
@@ -209,6 +211,7 @@ pub fn update_user_config(
     auto_start: Option<bool>,
     daily_goal: Option<i32>,
     auto_launch: Option<bool>,
+    show_desktop_pet: Option<bool>,
 ) -> Result<UserConfig, String> {
     {
         let db_guard = app.state::<DbConnection>();
@@ -252,6 +255,10 @@ pub fn update_user_config(
         if let Some(a) = auto_launch {
             set_parts.push("auto_launch = ?");
             params.push(if a { "1".to_string() } else { "0".to_string() });
+        }
+        if let Some(s) = show_desktop_pet {
+            set_parts.push("show_desktop_pet = ?");
+            params.push(if s { "1".to_string() } else { "0".to_string() });
         }
         set_parts.push("updated_at = datetime('now')");
 
@@ -688,6 +695,41 @@ pub fn update_tray_title(state: State<TrayIconState>, title: String) -> Result<(
     #[cfg(target_os = "macos")]
     {
         state.update_tray(&title);
+    }
+    Ok(())
+}
+
+// 切换桌面宠物窗口显示/隐藏
+#[tauri::command]
+pub fn toggle_pet_window(app: AppHandle, show: bool) -> Result<(), String> {
+    if let Some(pet_window) = app.get_webview_window("pet") {
+        if show {
+            // 尝试恢复保存的位置
+            let saved_pos = {
+                let db_guard = app.state::<DbConnection>();
+                let conn = db_guard.0.lock().map_err(|e| format!("Failed to acquire lock: {}", e))?;
+                conn.query_row(
+                    "SELECT value FROM app_state WHERE key = 'pet_position'",
+                    [],
+                    |row| row.get::<_, String>(0),
+                ).ok()
+            };
+
+            if let Some(pos_json) = saved_pos {
+                if let Ok(pos) = serde_json::from_str::<serde_json::Value>(&pos_json) {
+                    if let (Some(x), Some(y)) = (pos["x"].as_f64(), pos["y"].as_f64()) {
+                        let _ = pet_window.set_position(tauri::Position::Logical(
+                            tauri::LogicalPosition::new(x, y)
+                        ));
+                    }
+                }
+            }
+
+            let _ = pet_window.show();
+            let _ = pet_window.set_ignore_cursor_events(true);
+        } else {
+            let _ = pet_window.hide();
+        }
     }
     Ok(())
 }

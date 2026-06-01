@@ -84,6 +84,7 @@ pub fn init_db(conn: &Connection) -> SqliteResult<()> {
     let _ = conn.execute("ALTER TABLE user_config ADD COLUMN auto_start INTEGER NOT NULL DEFAULT 0", []);
     let _ = conn.execute("ALTER TABLE user_config ADD COLUMN daily_goal INTEGER NOT NULL DEFAULT 8", []);
     let _ = conn.execute("ALTER TABLE user_config ADD COLUMN auto_launch INTEGER NOT NULL DEFAULT 0", []);
+    let _ = conn.execute("ALTER TABLE user_config ADD COLUMN show_desktop_pet INTEGER NOT NULL DEFAULT 0", []);
 
     Ok(())
 }
@@ -142,6 +143,7 @@ pub struct UserConfig {
     pub auto_start: bool,
     pub daily_goal: i32,
     pub auto_launch: bool,
+    pub show_desktop_pet: bool,
 }
 
 // 番茄钟记录
