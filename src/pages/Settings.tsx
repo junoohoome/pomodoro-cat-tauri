@@ -164,6 +164,61 @@ export default function SettingsPage() {
         </div>
       </div>
 
+      {/* 桌面宠物 */}
+      <div className="card" style={{
+        background: 'linear-gradient(135deg, #FFFFFF 0%, #FFF8F0 100%)',
+        borderRadius: '12px',
+        padding: '20px',
+        marginBottom: '16px',
+        boxShadow: '0 4px 12px rgba(255, 107, 107, 0.12)',
+        border: '1px solid #FFECE0'
+      }}>
+        <div style={{ marginBottom: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+            <span style={{ fontSize: '20px' }}>🐱</span>
+            <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#2C2C2C', margin: 0 }}>桌面宠物</h3>
+          </div>
+          <p style={{ fontSize: '13px', color: '#666', margin: 0 }}>在桌面上显示一只小猫咪，跟随番茄钟状态变化</p>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ fontSize: '14px', color: '#2C2C2C', marginBottom: '4px' }}>显示桌面宠物</div>
+            <div style={{ fontSize: '12px', color: '#999' }}>快捷键 Cmd+Shift+P 切换</div>
+          </div>
+          <button
+            onClick={async () => {
+              const newValue = !config.showDesktopPet;
+              await updateConfig({ showDesktopPet: newValue });
+              await invoke("toggle_pet_window", { show: newValue });
+            }}
+            style={{
+              position: 'relative',
+              width: '56px',
+              height: '30px',
+              borderRadius: '15px',
+              background: config.showDesktopPet ? 'linear-gradient(135deg, #FF6B6B 0%, #FFA94D 100%)' : '#E0E0E0',
+              transition: 'all 0.3s ease',
+              cursor: 'pointer',
+              border: 'none',
+              padding: 0
+            }}
+          >
+            <span style={{
+              position: 'absolute',
+              top: '3px',
+              left: config.showDesktopPet ? '29px' : '3px',
+              width: '24px',
+              height: '24px',
+              borderRadius: '50%',
+              background: '#FFFFFF',
+              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+              transition: 'all 0.3s ease'
+            }}></span>
+          </button>
+        </div>
+      </div>
+
       {/* 外观主题 */}
       <div className="card" style={cardStyle}>
         <SectionHeader emoji="🎨" title="外观主题" />
