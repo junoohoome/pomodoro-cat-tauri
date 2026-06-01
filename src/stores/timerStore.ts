@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { TrayIcon } from "@tauri-apps/api/tray";
+import { emit } from "@tauri-apps/api/event";
 import { TimerState, PomodoroType } from "../types";
 
 // 格式化时间显示
@@ -25,6 +26,27 @@ async function updateTrayTitle(state: TimerState, remainingSeconds: number, _typ
   } catch (e) {
     // macOS only - ignore errors on other platforms
     console.warn("Tray update failed:", e);
+  }
+}
+
+// 向宠物窗口发送计时器状态
+async function emitTimerState(state: TimerState, type: PomodoroType) {
+  try {
+    let petState: string = state;
+    if (state === "running" && type === "break") {
+      petState = "break";
+    }
+    await emit("timer-state", { state: petState });
+  } catch {
+    // Pet window may not exist
+  }
+}
+
+async function emitTimerTick(remaining: number) {
+  try {
+    await emit("timer-tick", { remaining });
+  } catch {
+    // Pet window may not exist
   }
 }
 
@@ -107,6 +129,8 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       storedAutoStart: autoStart,
     });
     updateTrayTitle("running", newSeconds, type);
+    emitTimerState("running", type);
+    emitTimerTick(newSeconds);
   },
 
   pause: () => {
@@ -118,6 +142,7 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       targetEndTime: null,
     });
     updateTrayTitle("paused", remainingSeconds, type);
+    emitTimerState("paused", type);
   },
 
   resume: () => {
@@ -135,6 +160,8 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       pausedRemainingSeconds: null,
     });
     updateTrayTitle("running", pausedRemainingSeconds, type);
+    emitTimerState("running", type);
+    emitTimerTick(pausedRemainingSeconds);
   },
 
   stop: () => {
@@ -151,6 +178,7 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       completedPomodorosInSession: 0,
     });
     updateTrayTitle("idle", initialSeconds, "focus");
+    emitTimerState("idle", "focus");
   },
 
   switchToBreak: () => {
@@ -172,6 +200,8 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       pausedRemainingSeconds: null,
     });
     updateTrayTitle("running", breakSeconds, "break");
+    emitTimerState("running", "break");
+    emitTimerTick(breakSeconds);
   },
 
   prepareBreakMode: () => {
@@ -190,6 +220,7 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       pausedRemainingSeconds: null,
     });
     updateTrayTitle("idle", breakSeconds, "break");
+    emitTimerState("idle", "break");
   },
 
   switchToFocus: () => {
@@ -208,6 +239,7 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       ...(shouldReset ? { completedPomodorosInSession: 0 } : {}),
     });
     updateTrayTitle("idle", focusSeconds, "focus");
+    emitTimerState("idle", "focus");
   },
 
   setTaskId: (taskId: number | undefined) => {
@@ -222,6 +254,7 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       set({ remainingSeconds: remaining });
       // 每秒更新菜单栏
       updateTrayTitle("running", remaining, type);
+      emitTimerTick(remaining);
     }
   },
 
@@ -240,5 +273,6 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       pausedRemainingSeconds: null,
     });
     updateTrayTitle("idle", initialSeconds, "focus");
+    emitTimerState("idle", "focus");
   },
 }));
