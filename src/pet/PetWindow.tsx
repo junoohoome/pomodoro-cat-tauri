@@ -123,8 +123,25 @@ export default function PetWindow() {
     };
   }, [fetchCatState, showSpeechBubble]);
 
-  // Click cat → toggle feed overlay
+  // Left click → toggle feed overlay
   const handleClick = useCallback(async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (showFeed) {
+      setShowFeed(false);
+      return;
+    }
+
+    const cs = await fetchCatState();
+    if (cs) {
+      setShowFeed(true);
+      if (feedTimerRef.current) clearTimeout(feedTimerRef.current);
+      feedTimerRef.current = setTimeout(() => setShowFeed(false), 5000);
+    }
+  }, [showFeed, fetchCatState]);
+
+  // Right click → also toggle feed overlay
+  const handleContextMenu = useCallback(async (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     if (showFeed) {
       setShowFeed(false);
@@ -201,6 +218,7 @@ export default function PetWindow() {
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
       onClick={handleClick}
+      onContextMenu={handleContextMenu}
     >
       {/* Speech bubble */}
       {speech && !notification && !showFeed && (
