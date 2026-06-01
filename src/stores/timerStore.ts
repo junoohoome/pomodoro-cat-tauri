@@ -226,7 +226,7 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
   },
 
   tick: () => {
-    const { targetEndTime, state, type } = get();
+    const { targetEndTime, state } = get();
     if (state === "running" && targetEndTime !== null) {
       const now = Date.now();
       const remaining = Math.max(0, Math.floor((targetEndTime - now) / 1000));
