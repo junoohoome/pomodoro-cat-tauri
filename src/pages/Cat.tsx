@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useUserStore } from "../stores/userStore";
+import CodexCat from "../pet/components/CodexCat";
 import type { WeightState } from "../types";
 
 function getWeightState(weight: number): WeightState {
@@ -59,8 +60,8 @@ export default function CatPage() {
       {/* Cat showcase */}
       <div style={{ textAlign: 'center', marginBottom: '24px' }}>
         <div style={{
-          width: '120px',
-          height: '120px',
+          width: '142px',
+          height: '142px',
           margin: '0 auto 12px',
           background: 'var(--surface-secondary)',
           borderRadius: '50%',
@@ -70,7 +71,7 @@ export default function CatPage() {
           border: isBest ? '2px solid #4CAF50' : '1px solid var(--border-color)',
           boxShadow: isBest ? '0 0 12px rgba(76,175,80,0.15)' : 'none',
         }}>
-          <span style={{ fontSize: '64px', lineHeight: '1' }}>🐱</span>
+          <CodexCat mood="idle" />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '4px' }}>
           <span style={{ fontSize: '16px' }}>{weightState.icon}</span>

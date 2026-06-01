@@ -3,6 +3,7 @@ import { useTimerStore } from "../stores/timerStore";
 import { useTaskStore } from "../stores/taskStore";
 import { useUserStore } from "../stores/userStore";
 import { useTestModeStore } from "../stores/testModeStore";
+import CodexCat from "../pet/components/CodexCat";
 
 export default function TimerPage() {
   const {
@@ -41,7 +42,7 @@ export default function TimerPage() {
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const catEmoji = "🐱";
+  const catMood = state === "running" ? "running" : state === "paused" ? "paused" : state === "break" ? "break" : "idle";
 
   const getPriorityBadgeClass = (priority: string) => {
     const classes = {
@@ -85,12 +86,7 @@ export default function TimerPage() {
 
       {/* Cat display */}
       <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-        <span className={state === 'running' ? 'cat-breathing' : ''} style={{
-          fontSize: '64px',
-          lineHeight: '1',
-          display: 'block',
-          transition: 'transform 0.3s ease'
-        }}>{catEmoji}</span>
+        <CodexCat mood={catMood} />
       </div>
 
       {/* Circular timer */}
