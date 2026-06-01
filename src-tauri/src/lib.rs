@@ -231,6 +231,10 @@ pub fn run() {
             commands::import_data,
             // 桌面宠物
             commands::toggle_pet_window,
+            // 猫咪喂养
+            commands::get_cat_state,
+            commands::feed_cat,
+            commands::add_food,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
