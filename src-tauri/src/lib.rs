@@ -8,6 +8,7 @@ mod commands;
 use db::*;
 use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Manager};
+use tauri_plugin_autostart::MacosLauncher;
 
 // TrayIconState 全局状态管理
 #[derive(Clone)]
@@ -111,6 +112,8 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_autostart::init(MacosLauncher::LaunchAgent, None))
         .setup(|app| {
             // 初始化数据库
             let db_path = get_db_path(app.handle());
@@ -142,6 +145,27 @@ pub fn run() {
 
                 // 注册到 app state
                 app.manage(tray_state);
+            }
+
+            // === 创建桌面宠物窗口（默认隐藏）===
+            {
+                use tauri::{WebviewUrl, WebviewWindowBuilder};
+
+                let _pet_window = WebviewWindowBuilder::new(
+                    app,
+                    "pet",
+                    WebviewUrl::App("pet.html".into()),
+                )
+                .transparent(true)
+                .decorations(false)
+                .always_on_top(true)
+                .skip_taskbar(true)
+                .inner_size(120.0, 120.0)
+                .resizable(false)
+                .shadow(false)
+                .visible(false)
+                .build()
+                .expect("Failed to create pet window");
             }
 
             Ok(())
