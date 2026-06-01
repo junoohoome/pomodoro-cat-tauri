@@ -4,14 +4,6 @@ import { useTaskStore } from "../stores/taskStore";
 import { useUserStore } from "../stores/userStore";
 import { useTestModeStore } from "../stores/testModeStore";
 
-const CAT_ICONS: Record<number, string> = {
-  1: "🐱",
-  2: "😿",
-  3: "😸",
-  4: "🙀",
-  5: "😾",
-};
-
 export default function TimerPage() {
   const {
     state,
@@ -27,7 +19,7 @@ export default function TimerPage() {
   } = useTimerStore();
 
   const { currentTask, fetchActiveTasks } = useTaskStore();
-  const { config, fetchConfig, userData, stats, fetchStats } = useUserStore();
+  const { config, fetchConfig, stats, fetchStats } = useUserStore();
   const { isTestMode } = useTestModeStore();
 
   const TEST_FOCUS_DURATION = 1;
@@ -49,7 +41,7 @@ export default function TimerPage() {
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const catEmoji = userData ? CAT_ICONS[userData.level] || CAT_ICONS[1] : CAT_ICONS[1];
+  const catEmoji = "🐱";
 
   const getPriorityBadgeClass = (priority: string) => {
     const classes = {
