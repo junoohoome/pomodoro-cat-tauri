@@ -197,3 +197,93 @@ html, body {
   0%, 100% { opacity: 0.55; transform: scale(0.96); }
   50% { opacity: 1; transform: scale(1.05); }
 }
+
+/* 喂食浮层 */
+.pet-feed-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255, 248, 240, 0.97);
+  border: 2px solid rgba(255, 107, 107, 0.3);
+  border-radius: 14px;
+  padding: 10px;
+  z-index: 10;
+  animation: bubbleIn 0.2s ease-out;
+  box-shadow: 0 4px 16px rgba(255, 107, 107, 0.15);
+}
+
+.pet-feed-weight {
+  font-size: 14px;
+  font-weight: 700;
+  color: #5B352A;
+  text-align: center;
+  margin-bottom: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.pet-feed-bar {
+  height: 4px;
+  background: rgba(91, 53, 42, 0.1);
+  border-radius: 2px;
+  margin-bottom: 6px;
+  overflow: hidden;
+}
+
+.pet-feed-bar-fill {
+  height: 100%;
+  background: #F2A65E;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.pet-feed-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 11px;
+  color: #666;
+}
+
+.pet-feed-btn {
+  width: 100%;
+  padding: 6px;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.pet-feed-btn.can-feed {
+  background: #FF6B6B;
+  color: white;
+}
+
+.pet-feed-btn.can-feed:hover {
+  opacity: 0.9;
+}
+
+.pet-feed-btn.disabled {
+  background: rgba(91, 53, 42, 0.08);
+  color: #999;
+  cursor: not-allowed;
+}
+
+/* 气泡台词 */
+.pet-speech {
+  background: rgba(255, 248, 240, 0.95);
+  border: 2px solid rgba(242, 166, 94, 0.35);
+  border-radius: 12px;
+  padding: 6px 10px;
+  max-width: 140px;
+  margin-bottom: 4px;
+  box-shadow: 0 4px 12px rgba(242, 166, 94, 0.15);
+  animation: bubbleIn 0.3s ease-out;
+  font-size: 11px;
+  color: #5B352A;
+  text-align: center;
+  line-height: 1.4;
+}
