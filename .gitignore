@@ -42,7 +42,7 @@ Thumbs.db
 # Git worktrees
 .worktrees/
 
-# AI tool generated docs
-docs/
+# AI tool generated docs (keep design specs)
+docs/!docs/superpowers/
 .superpowers/
 plans/
