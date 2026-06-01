@@ -57,21 +57,20 @@ export interface PomodoroRecord {
   recordedAt: string;
 }
 
-// 猫咪成长阶段
-export interface CatStage {
-  level: number;
-  name: string;
-  cansNeeded: number;
-  icon: string;
+// 猫咪状态
+export interface CatState {
+  weight: number;
+  foodInventory: number;
+  lastFedAt: string;
+  lastMetabolismAt: string;
 }
 
-// 用户数据（猫咪系统）
-export interface UserData {
-  level: number;
-  totalCans: number;          // 总罐头数
-  totalMinutes: number;       // 总专注分钟数
-  streakDays: number;         // 连续天数
-  currentTaskId?: number;
+// 重量状态标签
+export interface WeightState {
+  label: string;
+  icon: string;
+  mood: string;
+  color: string;
 }
 
 // 统计数据
