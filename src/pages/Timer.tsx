@@ -31,8 +31,6 @@ export default function TimerPage() {
   const TEST_FOCUS_DURATION = 1;
   const TEST_BREAK_DURATION = 1;
 
-  const ROUND_MINUTES = 30; // focusDuration(25) + breakDuration(5)
-
   const formatMinutes = (totalMinutes: number): string => {
     const hours = totalMinutes / 60;
     return `${hours}h`;
@@ -298,18 +296,15 @@ export default function TimerPage() {
           <span style={{
             fontSize: '22px', fontWeight: '600', color: 'var(--accent-color)',
             fontVariantNumeric: 'tabular-nums', lineHeight: '1.2',
-          }}>{stats.todayCount}</span>
-          <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>已完成番茄</span>
+          }}>{(stats.todayMinutes / 60).toFixed(1)}h</span>
+          <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>今日专注</span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
           <span style={{
             fontSize: '22px', fontWeight: '600', color: 'var(--text-primary)',
             fontVariantNumeric: 'tabular-nums', lineHeight: '1.2',
-          }}>
-            {stats.todayMinutes}
-            <span style={{ fontSize: '14px', fontWeight: '400', color: 'var(--text-tertiary)' }}>min</span>
-          </span>
-          <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>专注时长</span>
+          }}>{stats.todayCount}次</span>
+          <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>专注次数</span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
           <span style={{
@@ -322,8 +317,8 @@ export default function TimerPage() {
           <span style={{
             fontSize: '22px', fontWeight: '600', color: 'var(--text-primary)',
             fontVariantNumeric: 'tabular-nums', lineHeight: '1.2',
-          }}>{stats.totalCount}</span>
-          <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>累计番茄</span>
+          }}>{(stats.totalMinutes / 60).toFixed(1)}h</span>
+          <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>累计专注</span>
         </div>
       </div>
     </div>
@@ -337,7 +332,7 @@ export default function TimerPage() {
           {getPriorityLabel(currentTask.priority)}
         </span>
         <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '500' }}>
-          {formatMinutes(currentTask.completedPomodoros * ROUND_MINUTES)} / {formatMinutes(currentTask.targetPomodoros * ROUND_MINUTES)}
+          {formatMinutes(currentTask.completedMinutes)} / {formatMinutes(Math.round(currentTask.durationTarget * 60))}
         </span>
       </div>
       <span style={{
@@ -345,48 +340,54 @@ export default function TimerPage() {
         lineHeight: '1.45', wordBreak: 'break-word',
       }}>{currentTask.name}</span>
       <div style={{ marginTop: '8px' }}>
-        {currentTask.targetPomodoros <= 8 ? (
-          // Show progress dots for short tasks (≤ 4 hours)
-          <div style={{ display: 'flex', gap: '3px' }}>
-            {Array.from({ length: currentTask.targetPomodoros }, (_, i) => (
-              <div key={i} style={{
-                width: '18px', height: '18px', borderRadius: '50%',
-                border: i < currentTask.completedPomodoros
-                  ? 'none'
-                  : i === currentTask.completedPomodoros
-                    ? '1.5px solid var(--accent-color)'
-                    : '1.5px solid var(--border-color)',
-                background: i < currentTask.completedPomodoros ? 'var(--accent-color)' : 'transparent',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                {i < currentTask.completedPomodoros && (
-                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'white' }} />
-                )}
+        {(() => {
+          const totalDots = Math.round(currentTask.durationTarget * 2);
+          // Only show dots if ≤ 16 (8 hours)
+          if (totalDots <= 16) {
+            return (
+              <div style={{ display: 'flex', gap: '3px' }}>
+                {Array.from({ length: totalDots }, (_, i) => (
+                  <div key={i} style={{
+                    width: '18px', height: '18px', borderRadius: '50%',
+                    border: (i + 1) * 30 <= currentTask.completedMinutes
+                      ? 'none'
+                      : (i + 1) * 30 - 30 < currentTask.completedMinutes
+                        ? '1.5px solid var(--accent-color)'
+                        : '1.5px solid var(--border-color)',
+                    background: (i + 1) * 30 <= currentTask.completedMinutes ? 'var(--accent-color)' : 'transparent',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    {(i + 1) * 30 <= currentTask.completedMinutes && (
+                      <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'white' }} />
+                    )}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        ) : (
-          // Show progress bar for long tasks (> 4 hours)
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{
-              flex: 1, height: '6px', borderRadius: '3px',
-              background: 'var(--border-color)', overflow: 'hidden',
-            }}>
-              <div style={{
-                height: '100%', borderRadius: '3px',
-                background: 'var(--accent-color)',
-                width: `${Math.min(100, (currentTask.completedPomodoros / currentTask.targetPomodoros) * 100)}%`,
-                transition: 'width 0.3s ease',
-              }} />
-            </div>
-            <span style={{
-              fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '500',
-              flexShrink: 0, fontVariantNumeric: 'tabular-nums',
-            }}>
-              {Math.round((currentTask.completedPomodoros / currentTask.targetPomodoros) * 100)}%
-            </span>
-          </div>
-        )}
+            );
+          } else {
+            return (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{
+                  flex: 1, height: '6px', borderRadius: '3px',
+                  background: 'var(--border-color)', overflow: 'hidden',
+                }}>
+                  <div style={{
+                    height: '100%', borderRadius: '3px',
+                    background: 'var(--accent-color)',
+                    width: `${Math.min(100, (currentTask.completedMinutes / (currentTask.durationTarget * 60)) * 100)}%`,
+                    transition: 'width 0.3s ease',
+                  }} />
+                </div>
+                <span style={{
+                  fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '500',
+                  flexShrink: 0, fontVariantNumeric: 'tabular-nums',
+                }}>
+                  {Math.round((currentTask.completedMinutes / (currentTask.durationTarget * 60)) * 100)}%
+                </span>
+              </div>
+            );
+          }
+        })()}
       </div>
     </div>
   );
@@ -398,14 +399,14 @@ export default function TimerPage() {
         <span style={{ fontSize: '12px', color: 'var(--text-secondary)', flexShrink: 0 }}>进度</span>
         <div className="progress-bar" style={{ flex: 1 }}>
           <div className="progress-fill" style={{
-            width: `${Math.min(100, (stats.todayCount / (config.dailyGoal || 4)) * 100)}%`,
+            width: `${Math.min(100, (stats.todayMinutes / 60 / (config.dailyGoal || 2)) * 100)}%`,
           }} />
         </div>
         <span style={{
           fontSize: '12px', fontWeight: '500', color: 'var(--text-primary)',
           flexShrink: 0, fontVariantNumeric: 'tabular-nums',
         }}>
-          {stats.todayCount}/{config.dailyGoal || 4}
+          {(stats.todayMinutes / 60).toFixed(1)}h/{config.dailyGoal || 2}h
         </span>
       </div>
     </div>
@@ -448,7 +449,7 @@ export default function TimerPage() {
               whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
             }}>{task.name}</span>
             <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', flexShrink: 0 }}>
-              {formatMinutes(task.completedPomodoros * ROUND_MINUTES)} / {formatMinutes(task.targetPomodoros * ROUND_MINUTES)}
+              {formatMinutes(task.completedMinutes)} / {formatMinutes(Math.round(task.durationTarget * 60))}
             </span>
           </div>
         ))}
