@@ -16,13 +16,18 @@ async function handleComplete(completedType: string) {
     const { currentTask } = useTaskStore.getState();
 
     if (completedType === "focus") {
-      // 记录番茄钟
-      const focusMinutes = config?.focusDuration || 25;
+      // 计算实际经过时间（分钟）
+      const startTime = useTimerStore.getState().startTime;
+      const elapsedMinutes = startTime
+        ? Math.round((Date.now() - startTime) / 60000)
+        : (config?.focusDuration || 25);
+
+      // 记录专注
       try {
         await invoke("record_pomodoro", {
           record: {
             taskId: currentTask?.id || null,
-            duration: focusMinutes,
+            duration: elapsedMinutes,
             type: "focus",
           },
         });
@@ -40,9 +45,9 @@ async function handleComplete(completedType: string) {
       // 更新任务进度
       if (currentTask) {
         try {
-          const newProgress = currentTask.completedPomodoros + 1;
-          const taskCompleted = newProgress >= currentTask.targetPomodoros;
-          await useTaskStore.getState().incrementTaskProgress(currentTask.id);
+          const newMinutes = currentTask.completedMinutes + elapsedMinutes;
+          const taskCompleted = newMinutes >= Math.round(currentTask.durationTarget * 60);
+          await useTaskStore.getState().incrementTaskProgress(currentTask.id, elapsedMinutes);
           if (taskCompleted) {
             useTaskStore.getState().setCurrentTask(null);
             useTimerStore.getState().setTaskId(undefined);
@@ -58,8 +63,8 @@ async function handleComplete(completedType: string) {
       // 刷新统计
       try { await useUserStore.getState().fetchStats(); } catch { /* ignore */ }
       try { await useUserStore.getState().fetchCatState(); } catch { /* ignore */ }
-      const todayCount = useUserStore.getState().stats?.todayCount || 0;
-      const dailyGoal = config?.dailyGoal || 4;
+      const todayMinutes = useUserStore.getState().stats?.todayMinutes || 0;
+      const dailyGoal = config?.dailyGoal || 2;
 
       // 播放声音
       if (config?.enableSound !== false) {
@@ -67,7 +72,7 @@ async function handleComplete(completedType: string) {
       }
 
       // 发送通知
-      const msg = todayCount >= dailyGoal ? '目标达成！今天太棒了！' : '太棒了！休息一下吧~';
+      const msg = todayMinutes / 60 >= dailyGoal ? '目标达成！今天太棒了！' : '太棒了！休息一下吧~';
       try { await emit("pet-notification", { title: '专注完成！获得 1 个罐头 🥫', body: msg }); } catch { /* ignore */ }
       if (config?.enableNotifications !== false) {
         try { await sendTauriNotification({ title: '专注完成！获得 1 个罐头 🥫', body: msg }); } catch { /* ignore */ }
