@@ -14,8 +14,8 @@ export type PomodoroType = "focus" | "break";
 export interface Task {
   id: number;
   name: string;
-  targetPomodoros: number;
-  completedPomodoros: number;
+  durationTarget: number;
+  completedMinutes: number;
   completed: boolean;
   priority: TaskPriority;
   deadline?: string;
@@ -26,7 +26,7 @@ export interface Task {
 // 新建任务
 export interface NewTask {
   name: string;
-  targetPomodoros: number;
+  durationTarget: number;
   priority: TaskPriority;
   deadline?: string | null;
 }
@@ -130,7 +130,7 @@ export interface HourlySegment {
 export interface TaskReportItem {
   taskId: number;
   taskName: string;
-  pomodoroCount: number;
+  sessionCount: number;
   focusMinutes: number;
   isCompleted: boolean;
 }

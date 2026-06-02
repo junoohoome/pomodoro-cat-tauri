@@ -20,7 +20,7 @@ interface TaskStore {
   updateTask: (id: number, updates: Partial<Task>) => Promise<void>;
   deleteTask: (id: number) => Promise<void>;
   setCurrentTask: (task: Task | null) => void;
-  incrementTaskProgress: (taskId: number) => Promise<void>;
+  incrementTaskProgress: (taskId: number, elapsedMinutes: number) => Promise<void>;
 }
 
 export const useTaskStore = create<TaskStore>((set, get) => ({
@@ -73,7 +73,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     const newTask = await invoke<Task>("create_task", {
       task: {
         name: task.name,
-        targetPomodoros: task.targetPomodoros,
+        durationTarget: task.durationTarget,
         priority: task.priority,
         deadline: task.deadline || undefined,
       },
@@ -87,8 +87,8 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       updates: {
         id,
         name: updates.name,
-        targetPomodoros: updates.targetPomodoros,
-        completedPomodoros: updates.completedPomodoros,
+        durationTarget: updates.durationTarget,
+        completedMinutes: updates.completedMinutes,
         completed: updates.completed,
         priority: updates.priority,
         deadline: updates.deadline !== undefined ? updates.deadline : null,
@@ -124,17 +124,17 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     set({ currentTask: task });
   },
 
-  incrementTaskProgress: async (taskId) => {
+  incrementTaskProgress: async (taskId, elapsedMinutes) => {
     const task = [...get().activeTasks, ...get().completedTasks].find(
       (t) => t.id === taskId
     );
     if (!task) return;
 
-    const newProgress = task.completedPomodoros + 1;
-    const completed = newProgress >= task.targetPomodoros;
+    const newMinutes = task.completedMinutes + elapsedMinutes;
+    const completed = newMinutes >= Math.round(task.durationTarget * 60);
 
     await get().updateTask(taskId, {
-      completedPomodoros: newProgress,
+      completedMinutes: newMinutes,
       completed,
     });
   },
