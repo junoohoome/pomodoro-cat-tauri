@@ -113,14 +113,35 @@ async function handleComplete(completedType: string) {
 export default function GlobalTimer() {
   const { state, tick } = useTimerStore();
 
-  // 每秒 tick
+  // 每秒 tick（可见性感知：隐藏时暂停，恢复时立即 tick 纠正漂移）
   useEffect(() => {
-    if (state === "running") {
-      const intervalId = setInterval(() => {
+    if (state !== "running") return;
+
+    let intervalId: ReturnType<typeof setInterval>;
+
+    const startTicking = () => {
+      intervalId = setInterval(() => {
         tick();
       }, 1000);
-      return () => { clearInterval(intervalId); };
-    }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        clearInterval(intervalId);
+      } else {
+        // 恢复可见时立即 tick，纠正隐藏期间的漂移
+        tick();
+        startTicking();
+      }
+    };
+
+    startTicking();
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, [state, tick]);
 
   // 监听 remainingSeconds 归零 → 触发完成逻辑

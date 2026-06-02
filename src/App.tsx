@@ -76,6 +76,16 @@ function App() {
     };
   }, [config?.theme]);
 
+  // 窗口不可见时暂停 CSS 动画，减少 CPU 开销
+  useEffect(() => {
+    const root = document.documentElement;
+    const handler = () => {
+      root.classList.toggle("animations-paused", document.hidden);
+    };
+    document.addEventListener("visibilitychange", handler);
+    return () => document.removeEventListener("visibilitychange", handler);
+  }, []);
+
   return (
     <>
       <GlobalTimer />

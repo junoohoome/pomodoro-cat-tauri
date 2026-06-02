@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import "./index.css";
+import "./styles/codex-cat-animations.css";
 
 // 导入页面
 import App from "./App";

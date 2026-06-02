@@ -8,6 +8,7 @@ import CatPaused from "./components/CatPaused";
 import CatBreak from "./components/CatBreak";
 import { pickBubble } from "../lib/bubbles";
 import type { CatState } from "../types";
+import "../styles/codex-cat-animations.css";
 import "./styles.css";
 
 type PetState = "idle" | "running" | "paused" | "break";
@@ -32,7 +33,6 @@ export default function PetWindow() {
   const [speech, setSpeech] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const targetEndTimeRef = useRef<number | null>(null);
-  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const feedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchCatState = useCallback(async () => {
@@ -81,25 +81,15 @@ export default function PetWindow() {
     };
   }, []);
 
-  // Local countdown
+  // 窗口不可见时暂停 CSS 动画，减少 CPU 开销
   useEffect(() => {
-    if (countdownRef.current) {
-      clearInterval(countdownRef.current);
-      countdownRef.current = null;
-    }
-    if (state === "running" && targetEndTimeRef.current) {
-      countdownRef.current = setInterval(() => {
-        const remaining = Math.max(0, Math.floor((targetEndTimeRef.current! - Date.now()) / 1000));
-        setRemaining(remaining);
-      }, 1000);
-    }
-    return () => {
-      if (countdownRef.current) {
-        clearInterval(countdownRef.current);
-        countdownRef.current = null;
-      }
+    const root = document.documentElement;
+    const handler = () => {
+      root.classList.toggle("animations-paused", document.hidden);
     };
-  }, [state]);
+    document.addEventListener("visibilitychange", handler);
+    return () => document.removeEventListener("visibilitychange", handler);
+  }, []);
 
   // Timed random bubble (every 15-30 minutes)
   useEffect(() => {
