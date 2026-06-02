@@ -51,7 +51,7 @@ function NumberInput({ label, hint, value, min, max, unit, onChange }: {
           min={min}
           max={max}
           value={value}
-          onChange={(e) => onChange(parseInt(e.target.value) || min)}
+          onChange={(e) => onChange(parseFloat(e.target.value) || min)}
           style={{
             width: '64px',
             padding: '6px 8px',
@@ -141,7 +141,7 @@ export default function SettingsPage() {
         <ToggleRow label="显示每日目标" hint="在主页显示今日目标进度条" enabled={config.showDailyGoal}
           onChange={() => updateConfig({ showDailyGoal: !config.showDailyGoal })} last={!config.showDailyGoal} />
         {config.showDailyGoal && (
-          <NumberInput label="每日番茄目标" hint="每天计划完成的番茄数" value={config.dailyGoal} min={1} max={30} unit="个"
+          <NumberInput label="每日专注目标" hint="每天计划专注的小时数" value={config.dailyGoal} min={0.5} max={12} unit="小时"
             onChange={(v) => updateConfig({ dailyGoal: v })} />
         )}
         {config.showDailyGoal && (
