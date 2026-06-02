@@ -315,85 +315,49 @@ export default function TasksPage() {
     </div>
   );
 
-  // ─── Wheel column for drum roller ───
-  const WheelColumn = ({ values, selectedValue, onChange, unit }: {
-    values: number[];
-    selectedValue: number;
-    onChange: (v: number) => void;
-    unit: string;
-  }) => {
-    const ITEM_H = 32;
-    const VISIBLE = 5;
-    const containerRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-      const el = containerRef.current;
-      if (!el) return;
-      const idx = values.indexOf(selectedValue);
-      if (idx >= 0) {
-        el.scrollTop = idx * ITEM_H;
-      }
-    }, [selectedValue, values]);
+  // ─── Duration options for wheel ───
+  const DURATION_OPTIONS = (() => {
+    const opts: number[] = [];
+    // 0.5h step from 0.5h to 72h
+    for (let h = 0.5; h <= MAX_HOURS; h += 0.5) opts.push(h);
+    return opts;
+  })();
 
-    return (
-      <div style={{ position: 'relative', width: '60px' }}>
-        {/* Highlight band */}
-        <div style={{
-          position: 'absolute', top: ITEM_H * 2, left: 0, right: 0, height: ITEM_H,
-          background: 'var(--accent-light)', borderRadius: '6px', pointerEvents: 'none', zIndex: 1,
-          border: '1px solid var(--accent-light-border)',
-        }} />
-        <div
-          ref={containerRef}
-          onScroll={() => {
-            const el = containerRef.current;
-            if (!el) return;
-            const idx = Math.round(el.scrollTop / ITEM_H);
-            if (idx >= 0 && idx < values.length && values[idx] !== selectedValue) {
-              onChange(values[idx]);
-            }
-          }}
-          style={{
-            height: ITEM_H * VISIBLE,
-            overflowY: 'auto', overflowX: 'hidden',
-            scrollSnapType: 'y mandatory',
-            scrollbarWidth: 'none',
-            position: 'relative', zIndex: 2,
-          } as React.CSSProperties}
-        >
-          {/* Top padding */}
-          <div style={{ height: ITEM_H * 2, flexShrink: 0 }} />
-          {values.map((v) => (
-            <div
-              key={v}
-              onClick={() => onChange(v)}
-              style={{
-                height: ITEM_H, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                scrollSnapAlign: 'center',
-                fontSize: v === selectedValue ? '16px' : '14px',
-                fontWeight: v === selectedValue ? '600' : '400',
-                color: v === selectedValue ? 'var(--accent-color)' : 'var(--text-tertiary)',
-                cursor: 'pointer', transition: 'all 0.15s ease',
-                fontVariantNumeric: 'tabular-nums',
-                userSelect: 'none',
-              }}
-            >
-              {v}{unit}
-            </div>
-          ))}
-          {/* Bottom padding */}
-          <div style={{ height: ITEM_H * 2, flexShrink: 0 }} />
-        </div>
-      </div>
-    );
+  const formatHourLabel = (h: number): string => {
+    if (h < 1) return `${h * 60}min`;
+    if (h < 24) {
+      const hrs = Math.floor(h);
+      const mins = Math.round((h - hrs) * 60);
+      if (mins === 0) return `${hrs}h`;
+      return `${hrs}h ${mins}min`;
+    }
+    const days = Math.floor(h / 24);
+    const remain = h % 24;
+    if (remain === 0) return `${days}天`;
+    const hrs = Math.floor(remain);
+    const mins = Math.round((remain - hrs) * 60);
+    if (mins === 0) return `${days}天 ${hrs}h`;
+    return `${days}天 ${hrs}h ${mins}min`;
   };
 
   // ─── Duration selector ───
   const DurationSelector = ({ hours, onChange }: { hours: number; onChange: (h: number) => void }) => {
-    const days = Math.floor(hours / 24);
-    const remainHours = hours % 24;
-    const mins = Math.round((remainHours - Math.floor(remainHours)) * 60);
-    const hrs = Math.floor(remainHours);
+    const ITEM_H = 32;
+    const VISIBLE = 5;
+    const wheelRef = useRef<HTMLDivElement>(null);
+
+    // Find closest option for initial snap
+    const closestIndex = DURATION_OPTIONS.reduce((best, v, i) =>
+      Math.abs(v - hours) < Math.abs(DURATION_OPTIONS[best] - hours) ? i : best
+    , 0);
+    const currentHours = DURATION_OPTIONS[closestIndex];
+
+    useEffect(() => {
+      const el = wheelRef.current;
+      if (!el) return;
+      el.scrollTop = closestIndex * ITEM_H;
+    }, [closestIndex]);
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -403,16 +367,23 @@ export default function TasksPage() {
             <span
               key={preset.label}
               tabIndex={0}
-              onClick={() => onChange(preset.hours)}
+              onClick={() => {
+                onChange(preset.hours);
+                const el = wheelRef.current;
+                if (el) {
+                  const idx = DURATION_OPTIONS.indexOf(preset.hours);
+                  if (idx >= 0) el.scrollTop = idx * ITEM_H;
+                }
+              }}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onChange(preset.hours); }}
               style={{
                 fontSize: '13px',
-                color: hours === preset.hours ? 'var(--accent-color)' : 'var(--text-tertiary)',
-                fontWeight: hours === preset.hours ? '600' : '400',
+                color: currentHours === preset.hours ? 'var(--accent-color)' : 'var(--text-tertiary)',
+                fontWeight: currentHours === preset.hours ? '600' : '400',
                 cursor: 'pointer',
                 padding: '2px 8px',
                 borderRadius: '4px',
-                background: hours === preset.hours ? 'var(--accent-light)' : 'transparent',
+                background: currentHours === preset.hours ? 'var(--accent-light)' : 'transparent',
                 transition: 'all 0.15s ease',
                 whiteSpace: 'nowrap',
               }}
@@ -421,38 +392,65 @@ export default function TasksPage() {
             </span>
           ))}
         </div>
-        {/* Drum roller: days + hours + minutes */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
-          padding: '4px 0',
-        }}>
-          <WheelColumn
-            values={Array.from({ length: 4 }, (_, i) => i)}
-            selectedValue={days}
-            onChange={(d) => {
-              const newHours = Math.min(d * 24 + hrs + mins / 60, MAX_HOURS);
-              onChange(newHours);
+        {/* Single wheel */}
+        <div style={{ position: 'relative', margin: '0 auto' }}>
+          {/* Highlight band */}
+          <div style={{
+            position: 'absolute', top: ITEM_H * 2, left: 0, right: 0, height: ITEM_H,
+            background: 'var(--accent-light)', borderRadius: '6px', pointerEvents: 'none', zIndex: 1,
+            border: '1px solid var(--accent-light-border)',
+          }} />
+          <div
+            ref={wheelRef}
+            onScroll={() => {
+              const el = wheelRef.current;
+              if (!el) return;
+              const idx = Math.round(el.scrollTop / ITEM_H);
+              if (idx >= 0 && idx < DURATION_OPTIONS.length) {
+                onChange(DURATION_OPTIONS[idx]);
+              }
             }}
-            unit="天"
-          />
-          <WheelColumn
-            values={Array.from({ length: 24 }, (_, i) => i)}
-            selectedValue={hrs}
-            onChange={(h) => {
-              const newHours = Math.min(days * 24 + h + mins / 60, MAX_HOURS);
-              onChange(newHours);
-            }}
-            unit="h"
-          />
-          <WheelColumn
-            values={[0, 30]}
-            selectedValue={mins}
-            onChange={(m) => {
-              const newHours = Math.min(days * 24 + hrs + m / 60, MAX_HOURS);
-              onChange(newHours);
-            }}
-            unit="min"
-          />
+            style={{
+              height: ITEM_H * VISIBLE,
+              width: '120px',
+              overflowY: 'auto', overflowX: 'hidden',
+              scrollSnapType: 'y mandatory',
+              scrollbarWidth: 'none',
+              position: 'relative', zIndex: 2,
+              margin: '0 auto',
+            } as React.CSSProperties}
+          >
+            {/* Top padding */}
+            <div style={{ height: ITEM_H * 2, flexShrink: 0 }} />
+            {DURATION_OPTIONS.map((h) => (
+              <div
+                key={h}
+                onClick={() => {
+                  onChange(h);
+                  const el = wheelRef.current;
+                  if (el) {
+                    const idx = DURATION_OPTIONS.indexOf(h);
+                    if (idx >= 0) el.scrollTop = idx * ITEM_H;
+                  }
+                }}
+                style={{
+                  height: ITEM_H, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  scrollSnapAlign: 'center',
+                  fontSize: h === currentHours ? '15px' : '13px',
+                  fontWeight: h === currentHours ? '600' : '400',
+                  color: h === currentHours ? 'var(--accent-color)' : 'var(--text-tertiary)',
+                  cursor: 'pointer', transition: 'all 0.15s ease',
+                  fontVariantNumeric: 'tabular-nums',
+                  userSelect: 'none',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {formatHourLabel(h)}
+              </div>
+            ))}
+            {/* Bottom padding */}
+            <div style={{ height: ITEM_H * 2, flexShrink: 0 }} />
+          </div>
         </div>
       </div>
     );
