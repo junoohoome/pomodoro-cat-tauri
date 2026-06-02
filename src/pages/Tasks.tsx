@@ -790,7 +790,7 @@ export default function TasksPage() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '6px' }}>
                           {task.targetPomodoros > 1 && (
                             <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <TomatoIcon size={12} /> {formatMinutes(task.completedPomodoros * 25)} / {formatMinutes(task.targetPomodoros * ROUND_MINUTES)}
+                              <TomatoIcon size={12} /> {formatMinutes(task.completedPomodoros * ROUND_MINUTES)} / {formatMinutes(task.targetPomodoros * ROUND_MINUTES)}
                             </span>
                           )}
                           {task.deadline && task.deadline !== 'null' && (
@@ -862,7 +862,7 @@ export default function TasksPage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '4px' }}>
                       {task.targetPomodoros > 1 && (
                         <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <TomatoIcon size={12} /> {formatMinutes(task.completedPomodoros * 25)}
+                          <TomatoIcon size={12} /> {formatMinutes(task.completedPomodoros * ROUND_MINUTES)}
                         </span>
                       )}
                       {task.deadline && task.deadline !== 'null' && (
