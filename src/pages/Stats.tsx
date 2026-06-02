@@ -62,7 +62,7 @@ export default function StatsPage() {
       <div>
         {/* Title */}
         <div style={{ marginBottom: '12px', display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-          <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>今日报告</span>
+          <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>日报</span>
           <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>{todayLabel}</span>
         </div>
 
@@ -287,7 +287,7 @@ export default function StatsPage() {
   };
 
   const tabs: { key: StatsTab; label: string }[] = [
-    { key: "overview", label: "今日" },
+    { key: "overview", label: "日报" },
     { key: "weekly", label: "周报" },
     { key: "monthly", label: "月报" },
   ];

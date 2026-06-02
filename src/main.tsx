@@ -31,3 +31,6 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <RouterProvider router={router} />
   </React.StrictMode>,
 );
+
+// Disable default right-click context menu (desktop app)
+document.addEventListener("contextmenu", (e) => e.preventDefault());

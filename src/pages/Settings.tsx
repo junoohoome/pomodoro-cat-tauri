@@ -264,6 +264,39 @@ export default function SettingsPage() {
         </div>
       </div>
 
+      {/* Shortcuts */}
+      <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '6px', marginLeft: '2px' }}>快捷键</div>
+      <div style={{
+        background: 'var(--card-bg)',
+        borderRadius: 'var(--radius-lg)',
+        border: '1px solid var(--border-color)',
+        boxShadow: 'none',
+        marginBottom: '20px',
+        overflow: 'hidden',
+      }}>
+        {[
+          { keys: 'Space', action: '开始 / 暂停' },
+          { keys: 'Esc', action: '放弃当前番茄钟' },
+        ].map((shortcut, i) => (
+          <div key={i} style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '12px 16px',
+            borderBottom: i === 0 ? '1px solid var(--border-subtle)' : 'none',
+          }}>
+            <span style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{shortcut.action}</span>
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              padding: '3px 8px', fontSize: '11px', fontWeight: '500',
+              background: 'var(--surface-secondary)', border: '1px solid var(--border-color)',
+              borderRadius: '4px', color: 'var(--text-secondary)',
+              minWidth: '48px', textAlign: 'center',
+            }}>{shortcut.keys}</span>
+          </div>
+        ))}
+      </div>
+
       {/* System */}
       <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '6px', marginLeft: '2px' }}>系统</div>
       <div style={{

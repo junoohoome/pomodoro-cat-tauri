@@ -109,15 +109,6 @@ export default function TimerPage() {
   const progressOffset = circumference * (1 - progress);
   const otherTasks = activeTasks.filter(t => !t.completed && t.id !== currentTask?.id);
 
-  const getMotivation = () => {
-    if (state === "idle" && type === "focus") return "点击「开始」进入专注模式";
-    if (state === "idle" && type === "break") return "休息一下再继续吧";
-    if (state === "running" && type === "focus") return "保持专注，你做得很好";
-    if (state === "running" && type === "break") return "起来活动一下，喝杯水";
-    if (state === "paused") return "休息一下也没关系，随时继续";
-    return "";
-  };
-
   // Timer size: 280px for bento, 200px for compact
   const timerSize = isCompact ? 200 : 280;
   const timerBodySize = isCompact ? 188 : 266;
@@ -273,34 +264,6 @@ export default function TimerPage() {
           </button>
         </>
       )}
-    </div>
-  );
-
-  const renderKbdHints = () => (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'center',
-      gap: '16px',
-      marginTop: isCompact ? '8px' : '10px',
-    }}>
-      <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-        <span style={{
-          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-          padding: '1px 5px', fontSize: '10px', fontWeight: '500',
-          background: 'var(--surface-secondary)', border: '1px solid var(--border-color)',
-          borderRadius: '3px', color: 'var(--text-secondary)', lineHeight: '1.4',
-        }}>Space</span>
-        开始/暂停
-      </span>
-      <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-        <span style={{
-          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-          padding: '1px 5px', fontSize: '10px', fontWeight: '500',
-          background: 'var(--surface-secondary)', border: '1px solid var(--border-color)',
-          borderRadius: '3px', color: 'var(--text-secondary)', lineHeight: '1.4',
-        }}>Esc</span>
-        放弃
-      </span>
     </div>
   );
 
@@ -483,12 +446,7 @@ export default function TimerPage() {
 
         {renderControls()}
 
-        {/* Motivation */}
-        <div style={{ marginTop: '12px', fontSize: '13px', color: 'var(--text-tertiary)', textAlign: 'center' }}>
-          {getMotivation()}
-        </div>
 
-        {renderKbdHints()}
 
         {/* Compact: cards stacked below timer */}
         <div style={{ width: '100%', marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -537,17 +495,14 @@ export default function TimerPage() {
 
         {renderControls()}
 
-        <div style={{ marginTop: '12px', fontSize: '13px', color: 'var(--text-tertiary)', textAlign: 'center' }}>
-          {getMotivation()}
-        </div>
 
-        {renderKbdHints()}
       </div>
 
       {/* RIGHT: Info cards */}
       <div style={{
         display: 'flex', flexDirection: 'column', gap: '12px',
         overflowY: 'auto', maxHeight: 'calc(100vh - 76px)', paddingRight: '2px',
+        justifyContent: 'center',
       }}>
         {renderTodayStats()}
         {renderCurrentTask()}
