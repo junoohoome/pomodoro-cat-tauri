@@ -2,6 +2,34 @@ import { useState, useEffect, useRef } from "react";
 import { useTaskStore } from "../stores/taskStore";
 import { useTimerStore } from "../stores/timerStore";
 
+const TomatoIcon = ({ color = "var(--accent-color)", size = 14 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2c-1.5 0-2.5.8-3 2 .5-.3 1.2-.5 2-.5h2c.8 0 1.5.2 2 .5-.5-1.2-1.5-2-3-2z" fill="currentColor" />
+    <circle cx="12" cy="13" r="9" />
+    <path d="M9 5c-1.5-2-3-2.5-3.5-2s.5 3.5 2 5" />
+    <path d="M15 5c1.5-2 3-2.5 3.5-2s-.5 3.5-2 5" />
+  </svg>
+);
+
+const ROUND_MINUTES = 30; // focusDuration(25) + breakDuration(5)
+const PRESETS = [
+  { label: '30min', hours: 0.5 },
+  { label: '1h', hours: 1 },
+  { label: '2h', hours: 2 },
+  { label: '4h', hours: 4 },
+] as const;
+
+const hoursToPomodoros = (hours: number): number => Math.ceil(hours * 60 / ROUND_MINUTES);
+const pomodorosToHours = (pomodoros: number): number => pomodoros * ROUND_MINUTES / 60;
+
+const formatMinutes = (totalMinutes: number): string => {
+  const hours = Math.floor(totalMinutes / 60);
+  const mins = totalMinutes % 60;
+  if (hours === 0) return `${mins}min`;
+  if (mins === 0) return `${hours}h`;
+  return `${hours}h ${mins}min`;
+};
+
 export default function TasksPage() {
   const {
     activeTasks,
@@ -24,14 +52,14 @@ export default function TasksPage() {
   // Inline add state
   const [isAdding, setIsAdding] = useState(false);
   const [taskName, setTaskName] = useState("");
-  const [targetPomodoros, setTargetPomodoros] = useState(3);
+  const [estimatedHours, setEstimatedHours] = useState(1.5);
   const [priority, setPriority] = useState<"high" | "medium" | "low">("medium");
   const [deadline, setDeadline] = useState<string>(new Date().toISOString().split('T')[0]);
 
   // Inline edit state
   const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
   const [editName, setEditName] = useState("");
-  const [editTargetPomodoros, setEditTargetPomodoros] = useState(1);
+  const [editEstimatedHours, setEditEstimatedHours] = useState(0.5);
   const [editPriority, setEditPriority] = useState<"high" | "medium" | "low">("medium");
   const [editDeadline, setEditDeadline] = useState<string>("");
 
@@ -75,7 +103,7 @@ export default function TasksPage() {
     }
     await createTask({
       name: taskName,
-      targetPomodoros,
+      targetPomodoros: hoursToPomodoros(estimatedHours),
       priority,
       deadline: deadline || null,
     });
@@ -121,7 +149,7 @@ export default function TasksPage() {
     }
     setEditingTaskId(task.id);
     setEditName(task.name);
-    setEditTargetPomodoros(task.targetPomodoros);
+    setEditEstimatedHours(pomodorosToHours(task.targetPomodoros));
     setEditPriority(task.priority);
     setEditDeadline(task.deadline && task.deadline !== 'null' ? task.deadline.split('T')[0] : '');
   };
@@ -130,7 +158,7 @@ export default function TasksPage() {
     if (!editName.trim() || !editingTaskId) return;
     await updateTask(editingTaskId, {
       name: editName,
-      targetPomodoros: editTargetPomodoros,
+      targetPomodoros: hoursToPomodoros(editEstimatedHours),
       priority: editPriority,
       deadline: editDeadline || undefined,
     });
@@ -163,12 +191,12 @@ export default function TasksPage() {
       clearTimeout(timer);
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [editingTaskId, editName, editTargetPomodoros, editPriority, editDeadline]);
+  }, [editingTaskId, editName, editEstimatedHours, editPriority, editDeadline]);
 
   const closeInlineEdit = () => {
     setEditingTaskId(null);
     setEditName("");
-    setEditTargetPomodoros(1);
+    setEditEstimatedHours(0.5);
     setEditPriority("medium");
     setEditDeadline("");
   };
@@ -190,7 +218,7 @@ export default function TasksPage() {
       const { task } = pendingAction;
       setEditingTaskId(task.id);
       setEditName(task.name);
-      setEditTargetPomodoros(task.targetPomodoros);
+      setEditEstimatedHours(pomodorosToHours(task.targetPomodoros));
       setEditPriority(task.priority);
       setEditDeadline(task.deadline && task.deadline !== 'null' ? task.deadline.split('T')[0] : '');
     } else {
@@ -202,7 +230,7 @@ export default function TasksPage() {
 
   const resetAddForm = () => {
     setTaskName("");
-    setTargetPomodoros(3);
+    setEstimatedHours(1.5);
     setPriority("medium");
     setDeadline(new Date().toISOString().split('T')[0]);
   };
@@ -284,29 +312,57 @@ export default function TasksPage() {
     </div>
   );
 
-  // ─── Pomodoro selector ───
-  const PomodoroSelector = ({ value, onChange }: { value: number; onChange: (v: number) => void }) => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-      {[1, 2, 3, 4, 5].map((n) => (
+  // ─── Duration selector ───
+  const DurationSelector = ({ hours, onChange }: { hours: number; onChange: (h: number) => void }) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+      {PRESETS.map((preset) => (
         <span
-          key={n}
+          key={preset.label}
           tabIndex={0}
-          onClick={() => onChange(n)}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onChange(n); }}
+          onClick={() => onChange(preset.hours)}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onChange(preset.hours); }}
           style={{
-            fontSize: '14px',
-            color: value === n ? 'var(--accent-color)' : 'var(--text-tertiary)',
-            fontWeight: value === n ? '600' : '400',
+            fontSize: '13px',
+            color: hours === preset.hours ? 'var(--accent-color)' : 'var(--text-tertiary)',
+            fontWeight: hours === preset.hours ? '600' : '400',
             cursor: 'pointer',
-            padding: '2px 6px',
+            padding: '2px 8px',
             borderRadius: '4px',
-            background: value === n ? 'var(--accent-light)' : 'transparent',
+            background: hours === preset.hours ? 'var(--accent-light)' : 'transparent',
             transition: 'all 0.15s ease',
+            whiteSpace: 'nowrap',
           }}
         >
-          🍅{n}
+          {preset.label}
         </span>
       ))}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '2px', marginLeft: '2px' }}>
+        <input
+          type="number"
+          min="0.5"
+          max="24"
+          step="0.5"
+          value={PRESETS.some(p => p.hours === hours) ? '' : hours}
+          onChange={(e) => {
+            const val = parseFloat(e.target.value);
+            if (!isNaN(val) && val >= 0.5 && val <= 24) onChange(val);
+          }}
+          placeholder="h"
+          style={{
+            width: '42px',
+            fontSize: '13px',
+            color: 'var(--text-primary)',
+            background: 'var(--surface-secondary)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '4px',
+            outline: 'none',
+            fontFamily: 'inherit',
+            padding: '2px 6px',
+            textAlign: 'center',
+          }}
+        />
+        <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>h</span>
+      </div>
     </div>
   );
 
@@ -488,7 +544,7 @@ export default function TasksPage() {
                   }}
                 />
                 <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginTop: '10px', flexWrap: 'wrap' }}>
-                  <PomodoroSelector value={targetPomodoros} onChange={setTargetPomodoros} />
+                  <DurationSelector hours={estimatedHours} onChange={setEstimatedHours} />
                   <PrioritySelector value={priority} onChange={setPriority} />
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <span style={{ fontSize: '14px', color: 'var(--text-tertiary)' }}>📅</span>
@@ -593,8 +649,8 @@ export default function TasksPage() {
                         />
                         <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginTop: '12px', flexWrap: 'wrap' }}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '500', letterSpacing: '0.3px' }}>番茄数</span>
-                            <PomodoroSelector value={editTargetPomodoros} onChange={setEditTargetPomodoros} />
+                            <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '500', letterSpacing: '0.3px' }}>预估时长</span>
+                            <DurationSelector hours={editEstimatedHours} onChange={setEditEstimatedHours} />
                           </div>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                             <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '500', letterSpacing: '0.3px' }}>优先级</span>
@@ -733,8 +789,8 @@ export default function TasksPage() {
                       {hasDetails && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '6px' }}>
                           {task.targetPomodoros > 1 && (
-                            <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>
-                              🍅 {task.completedPomodoros}/{task.targetPomodoros}
+                            <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <TomatoIcon size={12} /> {formatMinutes(task.completedPomodoros * 25)} / {formatMinutes(task.targetPomodoros * ROUND_MINUTES)}
                             </span>
                           )}
                           {task.deadline && task.deadline !== 'null' && (
@@ -805,8 +861,8 @@ export default function TasksPage() {
                     </span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '4px' }}>
                       {task.targetPomodoros > 1 && (
-                        <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>
-                          🍅 {task.completedPomodoros}/{task.targetPomodoros}
+                        <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <TomatoIcon size={12} /> {formatMinutes(task.completedPomodoros * 25)}
                         </span>
                       )}
                       {task.deadline && task.deadline !== 'null' && (
