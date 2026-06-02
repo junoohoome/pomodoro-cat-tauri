@@ -31,6 +31,16 @@ export default function TimerPage() {
   const TEST_FOCUS_DURATION = 1;
   const TEST_BREAK_DURATION = 1;
 
+  const ROUND_MINUTES = 30; // focusDuration(25) + breakDuration(5)
+
+  const formatMinutes = (totalMinutes: number): string => {
+    const hours = Math.floor(totalMinutes / 60);
+    const mins = totalMinutes % 60;
+    if (hours === 0) return `${mins}min`;
+    if (mins === 0) return `${hours}h`;
+    return `${hours}h ${mins}min`;
+  };
+
   useEffect(() => {
     fetchConfig();
     fetchActiveTasks();
@@ -169,6 +179,8 @@ export default function TimerPage() {
     </svg>
   );
 
+  const showCatInTimer = !config?.showDesktopPet;
+
   const renderTimerBody = () => (
     <div style={{
       width: `${timerBodySize}px`,
@@ -184,11 +196,13 @@ export default function TimerPage() {
       zIndex: 1,
       gap: '4px',
     }}>
-      <div style={{ width: `${catSize}px`, height: `${catSize}px` }}>
-        <CodexCat mood={catMood} size={catSize} />
-      </div>
+      {showCatInTimer && (
+        <div style={{ width: `${catSize}px`, height: `${catSize}px` }}>
+          <CodexCat mood={catMood} size={catSize} />
+        </div>
+      )}
       <span style={{
-        fontSize: timerFontSize,
+        fontSize: showCatInTimer ? timerFontSize : (isCompact ? '52px' : '56px'),
         fontWeight: '600',
         color: 'var(--text-primary)',
         lineHeight: '1',
@@ -326,7 +340,7 @@ export default function TimerPage() {
           {getPriorityLabel(currentTask.priority)}
         </span>
         <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '500' }}>
-          {currentTask.completedPomodoros}/{currentTask.targetPomodoros} 番茄钟
+          {formatMinutes(currentTask.completedPomodoros * ROUND_MINUTES)} / {formatMinutes(currentTask.targetPomodoros * ROUND_MINUTES)}
         </span>
       </div>
       <span style={{
@@ -411,7 +425,7 @@ export default function TimerPage() {
               whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
             }}>{task.name}</span>
             <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', flexShrink: 0 }}>
-              {task.completedPomodoros}/{task.targetPomodoros}
+              {formatMinutes(task.completedPomodoros * ROUND_MINUTES)} / {formatMinutes(task.targetPomodoros * ROUND_MINUTES)}
             </span>
           </div>
         ))}
