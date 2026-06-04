@@ -52,6 +52,13 @@ function App() {
   const navigate = useNavigate();
   const { config, fetchConfig } = useUserStore();
 
+  // 禁止拖拽链接/图片到外部
+  useEffect(() => {
+    const handler = (e: DragEvent) => e.preventDefault();
+    document.addEventListener('dragstart', handler);
+    return () => document.removeEventListener('dragstart', handler);
+  }, []);
+
   useEffect(() => {
     fetchConfig();
   }, [fetchConfig]);
@@ -90,6 +97,18 @@ function App() {
     <>
       <GlobalTimer />
 
+      {/* Top drag region */}
+      <div data-tauri-drag-region style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: '38px',
+        zIndex: 9999,
+        WebkitAppRegion: 'drag',
+        cursor: 'default',
+      } as React.CSSProperties} />
+
       <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--app-bg)' }}>
         {/* Sidebar */}
         <aside style={{
@@ -103,14 +122,12 @@ function App() {
           paddingTop: '38px',
           flexShrink: 0
         }}>
-          {/* Logo - also serves as drag region */}
-          <div data-tauri-drag-region style={{
+          {/* Logo */}
+          <div style={{
             padding: '0 16px 16px',
             borderBottom: 'none',
             marginBottom: '8px',
-            cursor: 'default',
-            WebkitAppRegion: 'drag'
-          } as React.CSSProperties}>
+          }}>
             <h1 style={{
               fontSize: '15px',
               fontWeight: '600',

@@ -44,6 +44,14 @@ async function handleComplete(completedType: string) {
 
       // 更新任务进度（record_pomodoro 已更新 DB，刷新 store 即可）
       if (currentTask) {
+        // 乐观更新：立即更新 UI，避免 DB 刷新失败时显示 0min
+        const newMinutes = currentTask.completedMinutes + elapsedMinutes;
+        useTaskStore.getState().setCurrentTask({
+          ...currentTask,
+          completedMinutes: newMinutes,
+        });
+
+        // 从 DB 刷新确认实际值
         try {
           await useTaskStore.getState().fetchActiveTasks();
           const updatedTask = useTaskStore.getState().activeTasks.find(t => t.id === currentTask.id);

@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useTimerStore } from "../stores/timerStore";
 import { useTaskStore } from "../stores/taskStore";
 import { useUserStore } from "../stores/userStore";
-import { useTestModeStore } from "../stores/testModeStore";
 import CodexCat from "../pet/components/CodexCat";
 import { formatDuration } from "../lib/utils/format";
 
@@ -20,17 +19,12 @@ export default function TimerPage() {
     resume,
     stop,
     switchToFocus,
-    setTestMode,
   } = useTimerStore();
 
   const { activeTasks, currentTask, fetchActiveTasks, setCurrentTask } = useTaskStore();
   const { config, fetchConfig, stats, fetchStats } = useUserStore();
-  const { isTestMode } = useTestModeStore();
 
   const [isCompact, setIsCompact] = useState(() => window.innerWidth < COMPACT_BREAKPOINT);
-
-  const TEST_FOCUS_DURATION = 1;
-  const TEST_BREAK_DURATION = 1;
 
   useEffect(() => {
     fetchConfig();
@@ -38,9 +32,14 @@ export default function TimerPage() {
     fetchStats();
   }, [fetchConfig, fetchActiveTasks, fetchStats]);
 
+  // 配置加载后同步 store 初始时间
+  const { state: timerState } = useTimerStore();
   useEffect(() => {
-    setTestMode(isTestMode);
-  }, [isTestMode, setTestMode]);
+    if (config && timerState === "idle") {
+      const seconds = config.focusDuration * 60;
+      useTimerStore.setState({ remainingSeconds: seconds, totalSeconds: seconds });
+    }
+  }, [config?.focusDuration, timerState]);
 
   // Responsive layout
   useEffect(() => {
@@ -51,9 +50,9 @@ export default function TimerPage() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const focusDuration = isTestMode ? TEST_FOCUS_DURATION : (config?.focusDuration || 25);
-  const breakDuration = isTestMode ? TEST_BREAK_DURATION : (config?.breakDuration || 5);
-  const longBreakDuration = isTestMode ? TEST_BREAK_DURATION : (config?.longBreakDuration || 15);
+  const focusDuration = config?.focusDuration || 25;
+  const breakDuration = config?.breakDuration || 5;
+  const longBreakDuration = config?.longBreakDuration || 15;
   const autoStart = config?.autoStart || false;
 
   // Keyboard shortcuts
@@ -407,18 +406,6 @@ export default function TimerPage() {
   if (isCompact) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
-        {import.meta.env.DEV && isTestMode && (
-          <div style={{
-            position: 'fixed', bottom: '20px', right: '20px',
-            background: 'var(--surface-bg)', color: 'var(--text-secondary)',
-            padding: '6px 12px', borderRadius: 'var(--radius-sm)',
-            fontSize: '12px', fontWeight: '500', zIndex: 100,
-            border: '1px solid var(--border-color)',
-          }}>
-            测试模式
-          </div>
-        )}
-
         {/* Timer */}
         <div style={{
           position: 'relative', width: `${timerSize}px`, height: `${timerSize}px`,
@@ -452,18 +439,6 @@ export default function TimerPage() {
       margin: '0 auto',
       gap: '24px',
     }}>
-      {import.meta.env.DEV && isTestMode && (
-        <div style={{
-          position: 'fixed', bottom: '20px', right: '20px',
-          background: 'var(--surface-bg)', color: 'var(--text-secondary)',
-          padding: '6px 12px', borderRadius: 'var(--radius-sm)',
-          fontSize: '12px', fontWeight: '500', zIndex: 100,
-          border: '1px solid var(--border-color)',
-        }}>
-          测试模式
-        </div>
-      )}
-
       {/* LEFT: Timer area */}
       <div style={{
         display: 'flex', flexDirection: 'column', alignItems: 'center',

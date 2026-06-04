@@ -150,7 +150,7 @@ export default function ReportTab({
 
         <div style={{
           borderRadius: 'var(--radius-sm)',
-          padding: '12px 4px 10px',
+          padding: '24px 4px 10px',
           background: 'var(--surface-secondary)',
           border: '1px solid var(--border-subtle)',
         }}>
@@ -182,7 +182,7 @@ export default function ReportTab({
                     transition: 'height 0.5s ease',
                     height: `${Math.max(data.height, 6)}%`,
                   }}>
-                    {(isWeekly || data.mins > 0) && (
+                    {(isWeekly || (data.mins > 0 && data.shortLabel)) && (
                       <span style={{
                         position: 'absolute',
                         top: isWeekly ? '-14px' : '-12px',

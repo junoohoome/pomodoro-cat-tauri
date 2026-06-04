@@ -25,7 +25,12 @@ pub fn get_tasks(
         "SELECT id, name, duration_target, completed_minutes, completed,
          priority, deadline, created_at, updated_at
          FROM tasks WHERE completed = ?
-         ORDER BY priority DESC, created_at DESC
+         ORDER BY CASE priority
+             WHEN 'high' THEN 0
+             WHEN 'medium' THEN 1
+             WHEN 'low' THEN 2
+             ELSE 1
+         END, created_at DESC
          LIMIT ? OFFSET ?"
     ).map_err(|e| e.to_string())?;
 

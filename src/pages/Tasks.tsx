@@ -307,7 +307,7 @@ export default function TasksPage() {
             background: p.color,
           }} />
           <span style={{
-            fontSize: '14px',
+            fontSize: '13px',
             color: value === p.value ? 'var(--text-primary)' : 'var(--text-tertiary)',
             fontWeight: value === p.value ? '500' : '400',
           }}>
@@ -319,88 +319,73 @@ export default function TasksPage() {
   );
 
 
-  // ─── Duration options for wheel ───
-  const DURATION_OPTIONS = (() => {
-    const opts: number[] = [];
-    // 0.5h step from 0.5h to 72h
-    for (let h = 0.5; h <= MAX_HOURS; h += 0.5) opts.push(h);
-    return opts;
-  })();
-
-
-  // ─── Duration selector (compact wheel) ───
+  // ─── Duration selector (quick chips + input) ───
+  const DURATION_PRESETS = [0.5, 1, 2, 4, 8];
   const DurationSelector = ({ hours, onChange }: { hours: number; onChange: (h: number) => void }) => {
-    const ITEM_H = 26;
-    const VISIBLE = 3;
-    const wheelRef = useRef<HTMLDivElement>(null);
+    const [inputVal, setInputVal] = useState('');
+    const isPreset = DURATION_PRESETS.includes(hours);
+    const numVal = parseFloat(inputVal);
+    const isOverMax = inputVal !== '' && !isNaN(numVal) && numVal > MAX_HOURS;
+    const isUnderMin = inputVal !== '' && !isNaN(numVal) && numVal < 0.5;
 
-    const closestIndex = DURATION_OPTIONS.reduce((best, v, i) =>
-      Math.abs(v - hours) < Math.abs(DURATION_OPTIONS[best] - hours) ? i : best
-    , 0);
-    const currentHours = DURATION_OPTIONS[closestIndex];
-
-    useEffect(() => {
-      const el = wheelRef.current;
-      if (!el) return;
-      el.scrollTop = closestIndex * ITEM_H;
-    }, [closestIndex]);
+    const commitValue = () => {
+      if (inputVal === '') return;
+      let val = parseFloat(inputVal);
+      if (!isNaN(val)) {
+        val = Math.round(val * 2) / 2;
+        onChange(Math.min(MAX_HOURS, Math.max(0.5, val)));
+      }
+      setInputVal('');
+    };
 
     return (
-      <div style={{ position: 'relative', margin: '0 auto' }}>
-        <div style={{
-          position: 'absolute', top: ITEM_H, left: 0, right: 0, height: ITEM_H,
-          background: 'var(--accent-light)', borderRadius: '4px', pointerEvents: 'none', zIndex: 1,
-          border: '1px solid var(--accent-light-border)',
-        }} />
-        <div
-          ref={wheelRef}
-          onScroll={() => {
-            const el = wheelRef.current;
-            if (!el) return;
-            const idx = Math.round(el.scrollTop / ITEM_H);
-            if (idx >= 0 && idx < DURATION_OPTIONS.length) {
-              onChange(DURATION_OPTIONS[idx]);
-            }
-          }}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+        {DURATION_PRESETS.map((p) => (
+          <button
+            key={p}
+            onClick={() => { onChange(p); setInputVal(''); }}
+            style={{
+              padding: '2px 8px',
+              fontSize: '12px',
+              borderRadius: '4px',
+              border: hours === p && inputVal === '' ? '1px solid var(--accent-color)' : '1px solid var(--border-color)',
+              background: hours === p && inputVal === '' ? 'var(--accent-light)' : 'transparent',
+              color: hours === p && inputVal === '' ? 'var(--accent-color)' : 'var(--text-tertiary)',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              fontWeight: hours === p && inputVal === '' ? '500' : '400',
+              transition: 'all 0.15s ease',
+              lineHeight: '1.4',
+            }}
+          >
+            {p}h
+          </button>
+        ))}
+        <input
+          type="number"
+          min={0.5}
+          max={MAX_HOURS}
+          step={0.5}
+          value={inputVal}
+          onChange={(e) => setInputVal(e.target.value)}
+          onBlur={commitValue}
+          onKeyDown={(e) => { if (e.key === 'Enter') commitValue(); }}
+          placeholder={isPreset ? '其他' : undefined}
           style={{
-            height: ITEM_H * VISIBLE,
-            width: '80px',
-            overflowY: 'auto', overflowX: 'hidden',
-            scrollSnapType: 'y mandatory',
-            scrollbarWidth: 'none',
-            position: 'relative', zIndex: 2,
-            margin: '0 auto',
-          } as React.CSSProperties}
-        >
-          <div style={{ height: ITEM_H, flexShrink: 0 }} />
-          {DURATION_OPTIONS.map((h) => (
-            <div
-              key={h}
-              onClick={() => {
-                onChange(h);
-                const el = wheelRef.current;
-                if (el) {
-                  const idx = DURATION_OPTIONS.indexOf(h);
-                  if (idx >= 0) el.scrollTop = idx * ITEM_H;
-                }
-              }}
-              style={{
-                height: ITEM_H, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                scrollSnapAlign: 'center',
-                fontSize: h === currentHours ? '14px' : '12px',
-                fontWeight: h === currentHours ? '600' : '400',
-                color: h === currentHours ? 'var(--accent-color)' : 'var(--text-tertiary)',
-                cursor: 'pointer', transition: 'all 0.15s ease',
-                fontVariantNumeric: 'tabular-nums',
-                userSelect: 'none',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {h}h
-            </div>
-          ))}
-          <div style={{ height: ITEM_H, flexShrink: 0 }} />
-        </div>
+            width: '48px',
+            padding: '2px 4px',
+            fontSize: '12px',
+            border: isOverMax || isUnderMin ? '1px solid var(--destructive-color)' : '1px solid var(--border-color)',
+            borderRadius: '4px',
+            background: 'transparent',
+            color: isOverMax || isUnderMin ? 'var(--destructive-color)' : 'var(--text-primary)',
+            textAlign: 'center',
+            outline: 'none',
+            fontFamily: 'inherit',
+          }}
+        />
+        <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>h</span>
+        {isOverMax && <span style={{ fontSize: '10px', color: 'var(--destructive-color)' }}>≤72h</span>}
       </div>
     );
   };
@@ -420,23 +405,23 @@ export default function TasksPage() {
     <div
       onClick={onClick}
       style={{
-        width: '20px',
-        height: '20px',
+        width: '16px',
+        height: '16px',
         borderRadius: '50%',
-        border: filled ? 'none' : `2px solid ${color}`,
+        border: filled ? 'none' : `1.5px solid ${color}`,
         background: filled ? color : 'transparent',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         cursor: disabled ? 'not-allowed' : 'pointer',
         flexShrink: 0,
-        marginTop: '1px',
+        marginTop: '2px',
         transition: 'all 0.2s ease',
         opacity: disabled ? 0.5 : 1,
       }}
     >
       {filled && (
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="20 6 9 17 4 12" />
         </svg>
       )}
@@ -499,19 +484,18 @@ export default function TasksPage() {
       }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
           <h1 style={{
-            fontSize: '28px',
-            fontWeight: '700',
+            fontSize: '20px',
+            fontWeight: '600',
             color: 'var(--accent-color)',
             margin: '0',
-            letterSpacing: '-0.5px',
           }}>
             任务
           </h1>
           {activeTasks.length > 0 && (
             <span style={{
-              fontSize: '16px',
+              fontSize: '20px',
               fontWeight: '600',
-              color: 'var(--text-tertiary)',
+              color: 'var(--accent-color)',
             }}>
               {activeTasks.length}
             </span>
@@ -585,18 +569,18 @@ export default function TasksPage() {
               gap: '10px',
             }}>
               <div style={{
-                width: '20px',
-                height: '20px',
+                width: '16px',
+                height: '16px',
                 borderRadius: '50%',
-                border: `2px solid var(--accent-color)`,
+                border: `1.5px solid var(--text-tertiary)`,
                 flexShrink: 0,
-                marginTop: '1px',
-                background: 'var(--accent-color)',
+                marginTop: '2px',
+                background: 'var(--text-tertiary)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}>
-                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="12" y1="5" x2="12" y2="19" />
                   <line x1="5" y1="12" x2="19" y2="12" />
                 </svg>
@@ -612,7 +596,7 @@ export default function TasksPage() {
                   onBlur={handleInlineCreate}
                   style={{
                     width: '100%',
-                    fontSize: '14px',
+                    fontSize: '13px',
                     lineHeight: '1.5',
                     color: 'var(--text-primary)',
                     background: 'transparent',
@@ -635,7 +619,7 @@ export default function TasksPage() {
                       onChange={(e) => setDeadline(e.target.value)}
                       min={new Date().toISOString().split('T')[0]}
                       style={{
-                        fontSize: '14px',
+                        fontSize: '13px',
                         color: deadline ? 'var(--text-primary)' : 'var(--text-tertiary)',
                         background: 'transparent',
                         border: 'none',
@@ -671,7 +655,7 @@ export default function TasksPage() {
                 <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
               </svg>
             </div>
-            <span style={{ fontSize: '15px', color: 'var(--text-secondary)', marginBottom: '6px', fontWeight: '500' }}>暂无任务</span>
+            <span style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '6px', fontWeight: '500' }}>暂无任务</span>
             <span style={{ fontSize: '13px', color: 'var(--text-tertiary)' }}>点击右上角 + 添加新任务</span>
           </div>
         ) : (
@@ -728,7 +712,7 @@ export default function TasksPage() {
                           onFocus={(e) => e.currentTarget.style.borderColor = 'var(--accent-color)'}
                           onBlur={(e) => e.currentTarget.style.borderColor = 'var(--border-color)'}
                         />
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginTop: '12px', flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginTop: '8px', flexWrap: 'wrap' }}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                             <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '500', letterSpacing: '0.3px' }}>预估时长</span>
                             <DurationSelector hours={editEstimatedHours} onChange={setEditEstimatedHours} />
@@ -766,8 +750,8 @@ export default function TasksPage() {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'space-between',
-                          marginTop: '14px',
-                          paddingTop: '12px',
+                          marginTop: '10px',
+                          paddingTop: '8px',
                           borderTop: '1px solid var(--border-subtle)',
                         }}>
                           <div
@@ -852,7 +836,7 @@ export default function TasksPage() {
                     onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                   >
                     <CircleCheckbox
-                      color="var(--success-color)"
+                      color={pColor}
                       filled={false}
                       disabled={timerState !== 'idle'}
                       onClick={(e) => { e.stopPropagation(); handleCompleteTask(task.id); }}
@@ -868,10 +852,10 @@ export default function TasksPage() {
                         {task.name}
                       </div>
                       {hasDetails && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '6px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '2px' }}>
                           {task.durationTarget > 0.5 && (
                             <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <TomatoIcon size={12} /> {formatDuration(task.completedMinutes)} / {formatDuration(Math.round(task.durationTarget * 60))}
+                              <TomatoIcon size={12} color="var(--text-tertiary)" /> {formatDuration(task.completedMinutes)} / {formatDuration(Math.round(task.durationTarget * 60))}
                             </span>
                           )}
                           {task.deadline && task.deadline !== 'null' && (
@@ -923,29 +907,29 @@ export default function TasksPage() {
                   <div
                     onClick={(e) => { e.stopPropagation(); reopenTask(task.id); }}
                     style={{
-                    width: '20px',
-                    height: '20px',
+                    width: '16px',
+                    height: '16px',
                     borderRadius: '50%',
                     border: 'none',
-                    background: 'var(--success-color)',
+                    background: 'var(--text-tertiary)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
-                    marginTop: '1px',
+                    marginTop: '2px',
                     cursor: 'pointer',
                     transition: 'opacity 0.15s ease',
                   }}
                     onMouseEnter={(e) => e.currentTarget.style.opacity = '0.7'}
                     onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                   >
-                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <span style={{
-                      fontSize: '14px',
+                      fontSize: '13px',
                       color: 'var(--text-tertiary)',
                       textDecoration: 'line-through',
                       lineHeight: '1.5',

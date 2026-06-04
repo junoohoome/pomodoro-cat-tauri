@@ -149,7 +149,7 @@ export default function StatsPage() {
 
           <div style={{
             borderRadius: 'var(--radius-sm)',
-            padding: '12px 4px 10px',
+            padding: '24px 4px 10px',
             background: 'var(--surface-secondary)',
             border: '1px solid var(--border-subtle)',
           }}>

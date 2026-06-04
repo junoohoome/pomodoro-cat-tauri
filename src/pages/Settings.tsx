@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useUserStore } from "../stores/userStore";
-import { useTestModeStore } from "../stores/testModeStore";
+
 
 function ToggleSwitch({ enabled, onChange }: { enabled: boolean; onChange: () => void }) {
   return (
@@ -97,7 +97,6 @@ function ToggleRow({ label, hint, enabled, onChange, last }: {
 
 export default function SettingsPage() {
   const { config, fetchConfig, updateConfig, toggleAutoLaunch, resetConfig } = useUserStore();
-  const { isTestMode, setIsTestMode } = useTestModeStore();
 
   useEffect(() => {
     fetchConfig();
@@ -348,27 +347,6 @@ export default function SettingsPage() {
         恢复默认设置
       </button>
 
-      {/* Test mode (dev only) */}
-      {import.meta.env.DEV && (
-        <>
-          <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '6px', marginLeft: '2px' }}>开发者</div>
-          <div style={{
-            background: 'var(--card-bg)',
-            borderRadius: 'var(--radius-lg)',
-            border: '1px solid var(--border-color)',
-            boxShadow: 'none',
-            overflow: 'hidden',
-          }}>
-            <ToggleRow
-              label={isTestMode ? '测试模式已开启' : '测试模式已关闭'}
-              hint="使用1分钟代替正常时长"
-              enabled={isTestMode}
-              onChange={() => setIsTestMode(!isTestMode)}
-              last
-            />
-          </div>
-        </>
-      )}
     </div>
   );
 }
