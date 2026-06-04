@@ -335,56 +335,6 @@ export default function TimerPage() {
         fontSize: '13px', fontWeight: '400', color: 'var(--text-secondary)',
         lineHeight: '1.45', wordBreak: 'break-word',
       }}>{currentTask.name}</span>
-      <div style={{ marginTop: '8px' }}>
-        {(() => {
-          const totalDots = Math.round(currentTask.durationTarget * 2);
-          // Only show dots if ≤ 16 (8 hours)
-          if (totalDots <= 16) {
-            return (
-              <div style={{ display: 'flex', gap: '3px' }}>
-                {Array.from({ length: totalDots }, (_, i) => (
-                  <div key={i} style={{
-                    width: '18px', height: '18px', borderRadius: '50%',
-                    border: (i + 1) * 30 <= currentTask.completedMinutes
-                      ? 'none'
-                      : (i + 1) * 30 - 30 < currentTask.completedMinutes
-                        ? '1.5px solid var(--accent-color)'
-                        : '1.5px solid var(--border-color)',
-                    background: (i + 1) * 30 <= currentTask.completedMinutes ? 'var(--accent-color)' : 'transparent',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    {(i + 1) * 30 <= currentTask.completedMinutes && (
-                      <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'white' }} />
-                    )}
-                  </div>
-                ))}
-              </div>
-            );
-          } else {
-            return (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{
-                  flex: 1, height: '6px', borderRadius: '3px',
-                  background: 'var(--border-color)', overflow: 'hidden',
-                }}>
-                  <div style={{
-                    height: '100%', borderRadius: '3px',
-                    background: 'var(--accent-color)',
-                    width: `${Math.min(100, (currentTask.completedMinutes / (currentTask.durationTarget * 60)) * 100)}%`,
-                    transition: 'width 0.3s ease',
-                  }} />
-                </div>
-                <span style={{
-                  fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '500',
-                  flexShrink: 0, fontVariantNumeric: 'tabular-nums',
-                }}>
-                  {Math.round((currentTask.completedMinutes / (currentTask.durationTarget * 60)) * 100)}%
-                </span>
-              </div>
-            );
-          }
-        })()}
-      </div>
     </div>
   );
 
