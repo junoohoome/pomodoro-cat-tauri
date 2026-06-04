@@ -304,7 +304,7 @@ pub fn reset_user_config(app: AppHandle) -> Result<UserConfig, String> {
                 theme = 'light',
                 long_break_duration = 15,
                 auto_start = 0,
-                daily_goal = 2.0,
+                daily_goal = 4.0,
                 auto_launch = 0,
                 show_desktop_pet = 1,
                 show_daily_goal = 1,
@@ -335,10 +335,9 @@ pub fn record_pomodoro(app: AppHandle, record: NewPomodoroRecord) -> Result<Pomo
         if record.r#type == "focus" {
             conn.execute(
                 "UPDATE tasks SET completed_minutes = completed_minutes + ?,
-                 completed = CASE WHEN (completed_minutes + ?) >= CAST(ROUND(duration_target * 60) AS INTEGER) THEN 1 ELSE completed END,
                  updated_at = datetime('now')
                  WHERE id = ?",
-                params![record.duration, record.duration, task_id],
+                params![record.duration, task_id],
             ).map_err(|e| e.to_string())?;
         }
     }
