@@ -42,12 +42,16 @@ async function handleComplete(completedType: string) {
         console.error("add_food failed:", e);
       }
 
-      // 更新任务进度
+      // 更新任务进度（record_pomodoro 已更新 DB，刷新 store 即可）
       if (currentTask) {
         try {
-          await useTaskStore.getState().incrementTaskProgress(currentTask.id, elapsedMinutes);
+          await useTaskStore.getState().fetchActiveTasks();
+          const updatedTask = useTaskStore.getState().activeTasks.find(t => t.id === currentTask.id);
+          if (updatedTask) {
+            useTaskStore.getState().setCurrentTask(updatedTask);
+          }
         } catch (e) {
-          console.error("task update failed:", e);
+          console.error("task refresh failed:", e);
         }
       }
 
@@ -57,8 +61,8 @@ async function handleComplete(completedType: string) {
       // 刷新统计
       try { await useUserStore.getState().fetchStats(); } catch { /* ignore */ }
       try { await useUserStore.getState().fetchCatState(); } catch { /* ignore */ }
-      const todayMinutes = useUserStore.getState().stats?.todayMinutes || 0;
-      const dailyGoal = config?.dailyGoal || 2;
+      const todayCount = useUserStore.getState().stats?.todayCount || 0;
+      const dailyGoal = config?.dailyGoal || 4;
 
       // 播放声音
       if (config?.enableSound !== false) {
@@ -66,7 +70,7 @@ async function handleComplete(completedType: string) {
       }
 
       // 发送通知
-      const msg = todayMinutes / 60 >= dailyGoal ? '目标达成！今天太棒了！' : '太棒了！休息一下吧~';
+      const msg = todayCount >= dailyGoal ? '目标达成！今天太棒了！' : '太棒了！休息一下吧~';
       try { await emit("pet-notification", { title: '专注完成！获得 1 个罐头 🥫', body: msg }); } catch { /* ignore */ }
       if (config?.enableNotifications !== false) {
         try { await sendTauriNotification({ title: '专注完成！获得 1 个罐头 🥫', body: msg }); } catch { /* ignore */ }
