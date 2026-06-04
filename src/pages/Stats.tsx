@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useUserStore } from "../stores/userStore";
 import ReportTab from "../components/stats/ReportTab";
 import type { TaskReportItem, HourlySegment } from "../types";
+import { formatDuration } from "../lib/utils/format";
 
 type StatsTab = "overview" | "weekly" | "monthly";
 
@@ -78,7 +79,7 @@ export default function StatsPage() {
             boxShadow: 'none',
           }}>
             <span style={{ fontSize: '20px', fontWeight: '600', color: 'var(--accent-color)', display: 'block', fontVariantNumeric: 'tabular-nums' }}>
-              {stats.todayMinutes > 0 ? (stats.todayMinutes / 60).toFixed(1) + "h" : "0h"}
+              {stats.todayMinutes > 0 ? formatDuration(stats.todayMinutes) : "0min"}
             </span>
             <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>专注时长</span>
           </div>
@@ -106,7 +107,7 @@ export default function StatsPage() {
             boxShadow: 'none',
           }}>
             <span style={{ fontSize: '20px', fontWeight: '600', color: 'var(--text-primary)', display: 'block', fontVariantNumeric: 'tabular-nums' }}>
-              {(stats.todayMinutes / 60).toFixed(1)}/{stats.dailyGoal}h
+              {stats.todayCount}/{Math.round(stats.dailyGoal)}次
             </span>
             <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>今日目标</span>
           </div>
@@ -199,7 +200,7 @@ export default function StatsPage() {
                             whiteSpace: 'nowrap',
                             fontVariantNumeric: 'tabular-nums',
                           }}>
-                            {seg.minutes > 0 ? (seg.minutes / 60).toFixed(1) + "h" : ""}
+                            {seg.minutes > 0 ? formatDuration(seg.minutes) : ""}
                           </span>
                         </div>
                       )}
@@ -271,7 +272,7 @@ export default function StatsPage() {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', flexShrink: 0 }}>
                     <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontVariantNumeric: 'tabular-nums' }}>
-                      {task.focusMinutes > 0 ? (task.focusMinutes / 60).toFixed(1) + "h" : "0h"}
+                      {task.focusMinutes > 0 ? formatDuration(task.focusMinutes) : "0min"}
                     </span>
                     <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>
                       {task.sessionCount}次

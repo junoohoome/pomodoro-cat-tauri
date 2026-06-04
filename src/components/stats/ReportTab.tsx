@@ -1,4 +1,5 @@
 import type { TaskReportItem, DailyStats } from "../../types";
+import { formatDuration } from "../../lib/utils/format";
 
 interface ReportTabProps {
   title: string;
@@ -34,7 +35,7 @@ export default function ReportTab({
     const standardMinutes = 480;
     const heightPercent = (mins / standardMinutes) * 100;
     const adjustedHeight = mins > 0 ? Math.max(10, Math.min(100, heightPercent)) : 5;
-    const hours = mins > 0 ? (mins / 60).toFixed(1) : "0";
+    const hours = mins > 0 ? formatDuration(mins) : "0";
 
     const d = new Date(date + "T00:00:00");
     const today = new Date();
@@ -80,7 +81,7 @@ export default function ReportTab({
           boxShadow: 'none',
         }}>
           <span style={{ fontSize: '20px', fontWeight: '600', color: 'var(--accent-color)', display: 'block', fontVariantNumeric: 'tabular-nums' }}>
-            {minutes > 0 ? (minutes / 60).toFixed(1) + "h" : "0h"}
+            {minutes > 0 ? formatDuration(minutes) : "0min"}
           </span>
           <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>专注时长</span>
         </div>
@@ -275,7 +276,7 @@ export default function ReportTab({
                 </div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', flexShrink: 0 }}>
                   <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontVariantNumeric: 'tabular-nums' }}>
-                    {task.focusMinutes > 0 ? (task.focusMinutes / 60).toFixed(1) + "h" : "0h"}
+                    {task.focusMinutes > 0 ? formatDuration(task.focusMinutes) : "0min"}
                   </span>
                   <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>
                     {task.sessionCount}次
