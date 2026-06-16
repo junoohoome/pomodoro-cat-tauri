@@ -18,12 +18,9 @@ jobs:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             name: linux-x64
-          - os: macos-13
-            target: x86_64-apple-darwin
-            name: macos-x64-intel
-          - os: macos-14
-            target: aarch64-apple-darwin
-            name: macos-arm64-apple
+          - os: macos-15
+            target: universal-apple-darwin
+            name: macos-universal
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             name: windows-x64
@@ -42,8 +39,14 @@ jobs:
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.platform.target }}
+      - name: Add Rust targets
+        shell: bash
+        run: |
+          if [ "${{ matrix.platform.target }}" = "universal-apple-darwin" ]; then
+            rustup target add x86_64-apple-darwin aarch64-apple-darwin
+          else
+            rustup target add "${{ matrix.platform.target }}"
+          fi
 
       - name: Install dependencies (Ubuntu)
         if: matrix.platform.os == 'ubuntu-latest'
@@ -55,20 +58,20 @@ jobs:
         run: npm install
 
       - name: Build
-        run: npm run tauri build
+        run: npm run tauri build -- --target ${{ matrix.platform.target }}
 
       - name: List build output
         if: always()
         run: |
           echo "Bundle directory structure:"
-          ls -R src-tauri/target/release/bundle || echo "No bundle directory found"
+          ls -R "src-tauri/target/${{ matrix.platform.target }}/release/bundle" || echo "No bundle directory found"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         if: success()
         with:
           name: pomodoro-cat-${{ matrix.platform.name }}
-          path: src-tauri/target/release/bundle/
+          path: src-tauri/target/${{ matrix.platform.target }}/release/bundle/
           if-no-files-found: warn
 
       - name: Create Release
@@ -80,10 +83,10 @@ jobs:
           fail_on_unmatched_files: false
           generate_release_notes: false
           files: |
-            src-tauri/target/release/bundle/**/*.dmg
-            src-tauri/target/release/bundle/**/*.msi
-            src-tauri/target/release/bundle/**/*.exe
-            src-tauri/target/release/bundle/**/*.deb
-            src-tauri/target/release/bundle/**/*.AppImage
+            src-tauri/target/${{ matrix.platform.target }}/release/bundle/**/*.dmg
+            src-tauri/target/${{ matrix.platform.target }}/release/bundle/**/*.msi
+            src-tauri/target/${{ matrix.platform.target }}/release/bundle/**/*.exe
+            src-tauri/target/${{ matrix.platform.target }}/release/bundle/**/*.deb
+            src-tauri/target/${{ matrix.platform.target }}/release/bundle/**/*.AppImage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
