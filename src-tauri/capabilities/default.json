@@ -15,6 +15,7 @@
     "core:window:allow-inner-position",
     "core:window:allow-set-position",
     "opener:default",
+    "core:app:allow-version",
     "notification:default",
     "dialog:default",
     "autostart:default"

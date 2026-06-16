@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useUserStore } from "../stores/userStore";
+import AboutSection from "../components/AboutSection";
 
 
 function ToggleSwitch({ enabled, onChange }: { enabled: boolean; onChange: () => void }) {
@@ -314,6 +315,9 @@ export default function SettingsPage() {
         <ToggleRow label="开机启动" hint="登录系统时自动启动并最小化到托盘" enabled={config.autoLaunch}
           onChange={() => toggleAutoLaunch(!config.autoLaunch)} last />
       </div>
+
+      {/* About */}
+      <AboutSection />
 
       {/* Reset */}
       <button
