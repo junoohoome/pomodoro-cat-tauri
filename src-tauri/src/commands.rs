@@ -24,7 +24,7 @@ pub fn get_tasks(
     let mut stmt = conn.prepare(
         "SELECT id, name, duration_target, completed_minutes, completed,
          priority, deadline, created_at, updated_at, deleted_at
-         FROM tasks WHERE completed = ?
+         FROM tasks WHERE completed = ? AND deleted_at IS NULL
          ORDER BY CASE priority
              WHEN 'high' THEN 0
              WHEN 'medium' THEN 1
@@ -162,14 +162,17 @@ pub fn update_task(app: AppHandle, updates: UpdateTask) -> Result<Task, String> 
     Ok(task)
 }
 
-// 删除任务
+// 删除任务（软删除：打标记，保留专注历史与统计明细可读性）
 #[tauri::command]
 pub fn delete_task(app: AppHandle, id: i64) -> Result<(), String> {
     let db_guard = app.state::<DbConnection>();
     let conn = db_guard.0.lock().map_err(|e| format!("Failed to acquire lock: {}", e))?;
 
-    conn.execute("DELETE FROM tasks WHERE id = ?", params![id])
-        .map_err(|e| e.to_string())?;
+    conn.execute(
+        "UPDATE tasks SET deleted_at = datetime('now'), updated_at = datetime('now') WHERE id = ?",
+        params![id],
+    )
+    .map_err(|e| e.to_string())?;
 
     Ok(())
 }
