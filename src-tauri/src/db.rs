@@ -159,6 +159,7 @@ pub struct Task {
     pub deadline: Option<String>,
     pub created_at: String,
     pub updated_at: String,
+    pub deleted_at: Option<String>,
 }
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]

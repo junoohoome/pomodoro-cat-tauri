@@ -21,6 +21,7 @@ export interface Task {
   deadline?: string;
   createdAt: string;
   updatedAt: string;
+  deletedAt?: string | null;
 }
 
 // 新建任务
