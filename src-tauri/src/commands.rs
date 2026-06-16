@@ -23,8 +23,8 @@ pub fn get_tasks(
 
     let mut stmt = conn.prepare(
         "SELECT id, name, duration_target, completed_minutes, completed,
-         priority, deadline, created_at, updated_at
-         FROM tasks WHERE completed = ?
+         priority, deadline, created_at, updated_at, deleted_at
+         FROM tasks WHERE completed = ? AND deleted_at IS NULL
          ORDER BY CASE priority
              WHEN 'high' THEN 0
              WHEN 'medium' THEN 1
@@ -45,6 +45,7 @@ pub fn get_tasks(
             deadline: row.get(6)?,
             created_at: row.get(7)?,
             updated_at: row.get(8)?,
+            deleted_at: row.get(9)?,
         })
     }).map_err(|e| e.to_string())?
     .collect::<Result<Vec<_>, _>>()
@@ -69,7 +70,7 @@ pub fn create_task(app: AppHandle, task: NewTask) -> Result<Task, String> {
 
     let task = conn.query_row(
         "SELECT id, name, duration_target, completed_minutes, completed,
-         priority, deadline, created_at, updated_at FROM tasks WHERE id = ?",
+         priority, deadline, created_at, updated_at, deleted_at FROM tasks WHERE id = ?",
         params![id],
         |row| Ok(Task {
             id: row.get(0)?,
@@ -81,6 +82,7 @@ pub fn create_task(app: AppHandle, task: NewTask) -> Result<Task, String> {
             deadline: row.get(6)?,
             created_at: row.get(7)?,
             updated_at: row.get(8)?,
+            deleted_at: row.get(9)?,
         }),
     ).map_err(|e| e.to_string())?;
 
@@ -141,7 +143,7 @@ pub fn update_task(app: AppHandle, updates: UpdateTask) -> Result<Task, String> 
 
     let task = conn.query_row(
         "SELECT id, name, duration_target, completed_minutes, completed,
-         priority, deadline, created_at, updated_at FROM tasks WHERE id = ?",
+         priority, deadline, created_at, updated_at, deleted_at FROM tasks WHERE id = ?",
         params![updates.id],
         |row| Ok(Task {
             id: row.get(0)?,
@@ -153,20 +155,24 @@ pub fn update_task(app: AppHandle, updates: UpdateTask) -> Result<Task, String> 
             deadline: row.get(6)?,
             created_at: row.get(7)?,
             updated_at: row.get(8)?,
+            deleted_at: row.get(9)?,
         }),
     ).map_err(|e| e.to_string())?;
 
     Ok(task)
 }
 
-// 删除任务
+// 删除任务（软删除：打标记，保留专注历史与统计明细可读性）
 #[tauri::command]
 pub fn delete_task(app: AppHandle, id: i64) -> Result<(), String> {
     let db_guard = app.state::<DbConnection>();
     let conn = db_guard.0.lock().map_err(|e| format!("Failed to acquire lock: {}", e))?;
 
-    conn.execute("DELETE FROM tasks WHERE id = ?", params![id])
-        .map_err(|e| e.to_string())?;
+    conn.execute(
+        "UPDATE tasks SET deleted_at = datetime('now'), updated_at = datetime('now') WHERE id = ?",
+        params![id],
+    )
+    .map_err(|e| e.to_string())?;
 
     Ok(())
 }
@@ -679,7 +685,7 @@ pub fn export_data(app: AppHandle, path: String) -> Result<(), String> {
         let mut tasks = Vec::new();
         let mut stmt = conn.prepare(
             "SELECT id, name, duration_target, completed_minutes, completed,
-             priority, deadline, created_at, updated_at FROM tasks ORDER BY id"
+             priority, deadline, created_at, updated_at, deleted_at FROM tasks ORDER BY id"
         ).map_err(|e| e.to_string())?;
         let rows = stmt.query_map([], |row| {
             Ok(Task {
@@ -692,6 +698,7 @@ pub fn export_data(app: AppHandle, path: String) -> Result<(), String> {
                 deadline: row.get(6)?,
                 created_at: row.get(7)?,
                 updated_at: row.get(8)?,
+                deleted_at: row.get(9)?,
             })
         }).map_err(|e| e.to_string())?;
         for row in rows {
@@ -736,10 +743,10 @@ pub fn import_data(app: AppHandle, path: String) -> Result<(), String> {
     // 导入任务
     for task in &data.tasks {
         conn.execute(
-            "INSERT INTO tasks (id, name, duration_target, completed_minutes, completed, priority, deadline, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO tasks (id, name, duration_target, completed_minutes, completed, priority, deadline, created_at, updated_at, deleted_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             params![task.id, task.name, task.duration_target, task.completed_minutes,
-                    task.completed, task.priority, task.deadline, task.created_at, task.updated_at],
+                    task.completed, task.priority, task.deadline, task.created_at, task.updated_at, task.deleted_at],
         ).map_err(|e| e.to_string())?;
     }
 

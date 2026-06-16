@@ -32,7 +32,8 @@ pub fn init_db(conn: &Connection) -> SqliteResult<()> {
             priority TEXT NOT NULL DEFAULT 'medium',
             deadline TEXT,
             created_at TEXT NOT NULL DEFAULT (datetime('now')),
-            updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+            updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+            deleted_at TEXT
         )",
         [],
     )?;
@@ -111,6 +112,9 @@ pub fn init_db(conn: &Connection) -> SqliteResult<()> {
     let _ = conn.execute("ALTER TABLE user_config ADD COLUMN show_desktop_pet INTEGER NOT NULL DEFAULT 0", []);
     let _ = conn.execute("ALTER TABLE user_config ADD COLUMN show_daily_goal INTEGER NOT NULL DEFAULT 1", []);
 
+    // 迁移：任务软删除（deleted_at 为 NULL 表示未删除）
+    let _ = conn.execute("ALTER TABLE tasks ADD COLUMN deleted_at TEXT", []);
+
     // 迁移：时间驱动指标体系 (v1)
     let migrated: bool = conn.query_row(
         "SELECT COUNT(*) > 0 FROM app_state WHERE key = 'migration_time_metrics_v1'",
@@ -155,6 +159,7 @@ pub struct Task {
     pub deadline: Option<String>,
     pub created_at: String,
     pub updated_at: String,
+    pub deleted_at: Option<String>,
 }
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
@@ -307,4 +312,64 @@ pub struct CatState {
     pub last_metabolism_at: String,
     pub food_earned_today: i32,
     pub food_earned_date: String,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rusqlite::{params, Connection};
+
+    fn setup() -> Connection {
+        let conn = Connection::open_in_memory().unwrap();
+        init_db(&conn).unwrap();
+        conn
+    }
+
+    #[test]
+    fn soft_deleted_task_hidden_from_list_but_kept_for_stats_join() {
+        let conn = setup();
+
+        // 建一个任务，并记一条指向它的专注记录
+        conn.execute(
+            "INSERT INTO tasks (name, duration_target) VALUES ('写论文', 2.0)",
+            [],
+        )
+        .unwrap();
+        let task_id = conn.last_insert_rowid();
+        conn.execute(
+            "INSERT INTO pomodoro_records (task_id, duration, type) VALUES (?, 25, 'focus')",
+            params![task_id],
+        )
+        .unwrap();
+
+        // 软删除（delete_task 将使用的 SQL）
+        conn.execute(
+            "UPDATE tasks SET deleted_at = datetime('now') WHERE id = ?",
+            params![task_id],
+        )
+        .unwrap();
+
+        // 任务列表语义（get_tasks）：已删除任务应被过滤掉
+        let active: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM tasks WHERE completed = 0 AND deleted_at IS NULL",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(active, 0);
+
+        // 统计明细语义（query_task_breakdown）：仍能 join 到原任务名
+        let name: String = conn
+            .query_row(
+                "SELECT COALESCE(t.name, '未关联任务')
+                 FROM pomodoro_records pr
+                 LEFT JOIN tasks t ON pr.task_id = t.id
+                 WHERE pr.type = 'focus'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(name, "写论文");
+    }
 }
