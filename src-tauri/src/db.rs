@@ -108,7 +108,7 @@ pub fn init_db(conn: &Connection) -> SqliteResult<()> {
     let _ = conn.execute("ALTER TABLE user_config ADD COLUMN auto_start INTEGER NOT NULL DEFAULT 0", []);
     let _ = conn.execute("ALTER TABLE user_config ADD COLUMN daily_goal INTEGER NOT NULL DEFAULT 4", []);
     let _ = conn.execute("ALTER TABLE user_config ADD COLUMN auto_launch INTEGER NOT NULL DEFAULT 0", []);
-    let _ = conn.execute("ALTER TABLE user_config ADD COLUMN show_desktop_pet INTEGER NOT NULL DEFAULT 1", []);
+    let _ = conn.execute("ALTER TABLE user_config ADD COLUMN show_desktop_pet INTEGER NOT NULL DEFAULT 0", []);
     let _ = conn.execute("ALTER TABLE user_config ADD COLUMN show_daily_goal INTEGER NOT NULL DEFAULT 1", []);
 
     // 迁移：时间驱动指标体系 (v1)

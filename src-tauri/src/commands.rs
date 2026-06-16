@@ -311,7 +311,7 @@ pub fn reset_user_config(app: AppHandle) -> Result<UserConfig, String> {
                 auto_start = 0,
                 daily_goal = 4.0,
                 auto_launch = 0,
-                show_desktop_pet = 1,
+                show_desktop_pet = 0,
                 show_daily_goal = 1,
                 updated_at = datetime('now')
              WHERE id = 1",
