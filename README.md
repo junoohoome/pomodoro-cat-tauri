@@ -32,14 +32,8 @@
 ### 🎯 应用截图
 
 <div align="center">
-  <img src="public/screenshots/home.png" alt="主界面 - 计时器" width="800"/>
-  <p><em>主界面 - 番茄钟计时器（Bento 双栏布局）</em></p>
-
-  <img src="public/screenshots/task.png" alt="任务管理" width="800"/>
-  <p><em>任务管理 - 为每个任务设置番茄目标</em></p>
-
-  <img src="public/screenshots/stats.png" alt="数据统计" width="800"/>
-  <p><em>数据统计 - 可视化你的专注记录</em></p>
+  <img src="public/screenshots/demo.gif" alt="应用演示" width="800"/>
+  <p><em>应用演示 - 计时、任务、养成完整流程</em></p>
 </div>
 
 ### 🛠️ 技术栈

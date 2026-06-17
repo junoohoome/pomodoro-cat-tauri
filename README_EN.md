@@ -32,14 +32,8 @@
 ### 🎯 Screenshots
 
 <div align="center">
-  <img src="public/screenshots/home.png" alt="Main Interface - Timer" width="800"/>
-  <p><em>Main Interface - Pomodoro Timer (Bento two-column layout)</em></p>
-
-  <img src="public/screenshots/task.png" alt="Task Management" width="800"/>
-  <p><em>Task Management - Set pomodoro goals for each task</em></p>
-
-  <img src="public/screenshots/stats.png" alt="Statistics" width="800"/>
-  <p><em>Statistics - Visualize your focus records</em></p>
+  <img src="public/screenshots/demo.gif" alt="App Demo" width="800"/>
+  <p><em>App demo — timer, tasks, and growth flow</em></p>
 </div>
 
 ### 🛠️ Tech Stack
