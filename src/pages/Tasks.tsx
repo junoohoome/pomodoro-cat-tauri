@@ -116,6 +116,25 @@ export default function TasksPage() {
     }
   };
 
+  // Click outside add area to save (mirrors edit-mode behavior)
+  useEffect(() => {
+    if (!isAdding) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      const addArea = document.querySelector('[data-add-area]');
+      if (addArea && !addArea.contains(e.target as Node)) {
+        handleInlineCreate();
+      }
+    };
+    // Delay to avoid the click that opened the add row from immediately closing it
+    const timer = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+    }, 0);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isAdding, taskName, estimatedHours, priority, deadline]);
+
   const handleSelectTask = (task: any) => {
     if (timerState !== 'idle') {
       setToastMessage('请先完成当前番茄钟或停止计时');
@@ -562,12 +581,15 @@ export default function TasksPage() {
         {/* ─── Inline add row ─── */}
         {isAdding && (
           <>
-            <div style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              padding: '5px 0',
-              gap: '10px',
-            }}>
+            <div
+              data-add-area
+              style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                padding: '5px 0',
+                gap: '10px',
+              }}
+            >
               <div style={{
                 width: '16px',
                 height: '16px',
@@ -593,7 +615,6 @@ export default function TasksPage() {
                   value={taskName}
                   onChange={(e) => setTaskName(e.target.value)}
                   onKeyDown={handleAddKeyDown}
-                  onBlur={handleInlineCreate}
                   style={{
                     width: '100%',
                     fontSize: '13px',
@@ -743,76 +764,6 @@ export default function TasksPage() {
                                 }}
                               />
                             </div>
-                          </div>
-                        </div>
-                        {/* Action bar */}
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          marginTop: '10px',
-                          paddingTop: '8px',
-                          borderTop: '1px solid var(--border-subtle)',
-                        }}>
-                          <div
-                            onClick={() => handleDeleteTask(task.id)}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '5px',
-                              cursor: 'pointer',
-                              color: 'var(--destructive-color)',
-                              opacity: 0.6,
-                              transition: 'opacity 0.15s ease',
-                              fontSize: '13px',
-                            }}
-                            onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
-                            onMouseLeave={(e) => e.currentTarget.style.opacity = '0.6'}
-                          >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                              <polyline points="3 6 5 6 21 6" />
-                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                            </svg>
-                            删除
-                          </div>
-                          <div style={{ display: 'flex', gap: '8px' }}>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); closeInlineEdit(); }}
-                              style={{
-                                padding: '4px 14px',
-                                fontSize: '13px',
-                                borderRadius: '6px',
-                                border: '1px solid var(--border-color)',
-                                background: 'var(--card-bg)',
-                                color: 'var(--text-secondary)',
-                                cursor: 'pointer',
-                                fontFamily: 'inherit',
-                                transition: 'background 0.15s ease',
-                              }}
-                              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--surface-secondary)'}
-                              onMouseLeave={(e) => e.currentTarget.style.background = 'var(--card-bg)'}
-                            >
-                              取消
-                            </button>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleEditSave(); }}
-                              style={{
-                                padding: '4px 14px',
-                                fontSize: '13px',
-                                borderRadius: '6px',
-                                border: 'none',
-                                background: 'var(--accent-color)',
-                                color: 'white',
-                                cursor: 'pointer',
-                                fontFamily: 'inherit',
-                                fontWeight: '500',
-                                transition: 'opacity 0.15s ease',
-                              }}
-                              onMouseEnter={(e) => e.currentTarget.style.opacity = '0.85'}
-                              onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-                            >
-                              保存
-                            </button>
                           </div>
                         </div>
                       </div>
