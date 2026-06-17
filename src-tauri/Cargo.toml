@@ -1,12 +1,12 @@
 [package]
-name = "pomodorocat"
+name = "focuscat"
 version = "1.0.0"
 description = "专注猫 - 一款可爱的番茄钟应用"
 authors = ["you"]
 edition = "2021"
 
 [lib]
-name = "pomodorocat_lib"
+name = "focuscat_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

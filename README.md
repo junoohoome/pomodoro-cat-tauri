@@ -60,7 +60,7 @@
 
 #### 从预构建版本安装（推荐）
 
-1. 前往 [Releases](https://github.com/junoohoome/pomodoro-cat-tauri/releases) 页面
+1. 前往 [Releases](https://github.com/junoohoome/focus-cat/releases) 页面
 2. 下载适合你操作系统的安装包
 3. 安装并运行应用
 
@@ -78,8 +78,8 @@
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 # 克隆项目
-git clone https://github.com/junoohoome/pomodoro-cat-tauri.git
-cd pomodoro-cat-tauri
+git clone https://github.com/junoohoome/focus-cat.git
+cd focus-cat
 
 # 安装依赖
 npm install
@@ -96,8 +96,8 @@ npm run tauri build
 # 安装 Rust: https://www.rust-lang.org/tools/install
 
 # 克隆项目
-git clone https://github.com/junoohoome/pomodoro-cat-tauri.git
-cd pomodoro-cat-tauri
+git clone https://github.com/junoohoome/focus-cat.git
+cd focus-cat
 
 # 安装依赖
 npm install
@@ -127,8 +127,8 @@ sudo apt install libwebkit2gtk-4.1-dev \
   librsvg2-dev
 
 # 克隆项目
-git clone https://github.com/junoohoome/pomodoro-cat-tauri.git
-cd pomodoro-cat-tauri
+git clone https://github.com/junoohoome/focus-cat.git
+cd focus-cat
 
 # 安装依赖
 npm install

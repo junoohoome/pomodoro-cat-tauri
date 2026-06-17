@@ -170,7 +170,7 @@ export default function AboutSection() {
         >
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: "13px", color: "var(--text-primary)" }}>GitHub 仓库</div>
-            <div style={{ fontSize: "11px", color: "var(--text-tertiary)", marginTop: "2px" }}>junoohoome/pomodoro-cat-tauri</div>
+            <div style={{ fontSize: "11px", color: "var(--text-tertiary)", marginTop: "2px" }}>junoohoome/focus-cat</div>
           </div>
           <span style={{ color: "var(--text-tertiary)", fontSize: "16px" }}>›</span>
         </button>

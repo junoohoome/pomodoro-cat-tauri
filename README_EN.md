@@ -60,7 +60,7 @@
 
 #### Install from Pre-built Release (Recommended)
 
-1. Go to [Releases](https://github.com/junoohoome/pomodoro-cat-tauri/releases)
+1. Go to [Releases](https://github.com/junoohoome/focus-cat/releases)
 2. Download the installer for your operating system
 3. Install and run the application
 
@@ -77,8 +77,8 @@
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 # Clone project
-git clone https://github.com/junoohoome/pomodoro-cat-tauri.git
-cd pomodoro-cat-tauri
+git clone https://github.com/junoohoome/focus-cat.git
+cd focus-cat
 
 # Install dependencies
 npm install
@@ -95,8 +95,8 @@ npm run tauri build
 # Install Rust: https://www.rust-lang.org/tools/install
 
 # Clone project
-git clone https://github.com/junoohoome/pomodoro-cat-tauri.git
-cd pomodoro-cat-tauri
+git clone https://github.com/junoohoome/focus-cat.git
+cd focus-cat
 
 # Install dependencies
 npm install
@@ -126,8 +126,8 @@ sudo apt install libwebkit2gtk-4.1-dev \
   librsvg2-dev
 
 # Clone project
-git clone https://github.com/junoohoome/pomodoro-cat-tauri.git
-cd pomodoro-cat-tauri
+git clone https://github.com/junoohoome/focus-cat.git
+cd focus-cat
 
 # Install dependencies
 npm install

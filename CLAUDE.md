@@ -47,7 +47,7 @@ cargo clean          # 清理构建产物（排查问题时有用）
 
 ### 项目结构
 ```
-pomodoro-cat-tauri/
+focus-cat/
 ├── src/                      # React 前端
 │   ├── pages/               # 页面组件 (Timer, Tasks, Cat, Stats, Settings)
 │   ├── stores/              # Zustand 状态管理
@@ -213,7 +213,7 @@ cargo clean  # 在 src-tauri 目录
 npm run tauri build
 
 # 输出位置: src-tauri/target/release/bundle/
-# macOS: bundle/macos/pomodoro-cat-tauri.app
+# macOS: bundle/macos/FocusCat.app
 # Windows: bundle/msi/
 # Linux: bundle/deb/ 或 bundle/appimage/
 ```

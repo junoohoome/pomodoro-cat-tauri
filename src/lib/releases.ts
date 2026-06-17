@@ -2,7 +2,7 @@
 // GitHub Releases 数据获取 + 版本比较（纯逻辑，不依赖 React）
 
 const REPO_OWNER = "junoohoome";
-const REPO_NAME = "pomodoro-cat-tauri";
+const REPO_NAME = "focus-cat";
 
 export const REPO_URL = `https://github.com/${REPO_OWNER}/${REPO_NAME}`;
 
