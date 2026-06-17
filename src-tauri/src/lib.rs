@@ -124,6 +124,10 @@ pub fn run() {
                 std::fs::create_dir_all(parent).expect("Failed to create database directory");
             }
 
+            // 迁移旧数据库名（pomodoro-cat.db → focus-cat.db）
+            migrate_legacy_db_name(app.handle())
+                .expect("Failed to migrate legacy database name");
+
             let conn = rusqlite::Connection::open(&db_path)
                 .expect("Failed to open database");
 

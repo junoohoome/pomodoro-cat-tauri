@@ -3,7 +3,7 @@ import { drizzle } from "drizzle-orm/better-sqlite3";
 import * as schema from "./schema";
 
 // 数据库文件路径
-const DB_PATH = "pomodoro-cat.db";
+const DB_PATH = "focus-cat.db";
 
 // 创建数据库连接
 export function createDb() {

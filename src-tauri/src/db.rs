@@ -4,13 +4,64 @@ use std::sync::Mutex;
 use tauri::{AppHandle, Manager};
 
 // 数据库文件名
-const DB_NAME: &str = "pomodoro-cat.db";
+const DB_NAME: &str = "focus-cat.db";
+// 旧数据库文件名（项目更名前），启动时自动迁移到新名
+const LEGACY_DB_NAME: &str = "pomodoro-cat.db";
 
 // 获取数据库路径
 pub fn get_db_path(app: &AppHandle) -> PathBuf {
     app.path().app_data_dir()
         .expect("Failed to get app data dir")
         .join(DB_NAME)
+}
+
+// 迁移旧数据库名：pomodoro-cat.db → focus-cat.db（幂等）
+// 规则：
+//   - 旧文件存在、新文件不存在 → 正常升级，重命名旧 → 新（含边车文件）
+//   - 旧、新都存在且新文件为空（无用户数据）、旧文件有数据 → 视为脏态，
+//     删除空的新文件后用旧文件迁移（避免脏态卡住迁移）
+//   - 其它情况（已迁移 / 全新安装 / 新文件已有真实数据）→ 不动
+pub fn migrate_legacy_db_name(app: &AppHandle) -> std::io::Result<()> {
+    let dir = app.path().app_data_dir().expect("Failed to get app data dir");
+    let new_path = dir.join(DB_NAME);
+    let old_path = dir.join(LEGACY_DB_NAME);
+
+    if !old_path.exists() {
+        return Ok(()); // 全新安装，没有旧库需要迁移
+    }
+
+    // 旧库存在：若新库也存在且已含用户数据，说明已迁移完成，跳过
+    if new_path.exists() && !new_db_is_empty(&new_path) {
+        return Ok(());
+    }
+
+    // 到这里：要么新库不存在，要么新库存在但为空 → 用旧库覆盖
+    if new_path.exists() {
+        let _ = std::fs::remove_file(&new_path);
+    }
+    std::fs::rename(&old_path, &new_path)?;
+    for ext in ["-wal", "-shm", "-journal"] {
+        let old_side = dir.join(format!("{}{}", LEGACY_DB_NAME, ext));
+        let new_side = dir.join(format!("{}{}", DB_NAME, ext));
+        if old_side.exists() {
+            let _ = std::fs::rename(&old_side, &new_side);
+        }
+    }
+    Ok(())
+}
+
+// 判断数据库是否为空（无用户数据）：tasks 与 pomodoro_records 均为空即视为空库
+fn new_db_is_empty(path: &std::path::Path) -> bool {
+    let Ok(conn) = Connection::open(path) else {
+        return true; // 打不开就当成空库，交给后续 init_db 处理
+    };
+    let tasks: i64 = conn
+        .query_row("SELECT COUNT(*) FROM tasks", [], |r| r.get(0))
+        .unwrap_or(0);
+    let records: i64 = conn
+        .query_row("SELECT COUNT(*) FROM pomodoro_records", [], |r| r.get(0))
+        .unwrap_or(0);
+    tasks == 0 && records == 0
 }
 
 // 获取数据库连接
