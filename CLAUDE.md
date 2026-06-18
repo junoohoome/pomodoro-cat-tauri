@@ -237,3 +237,14 @@ killall Dock
 - 边界场景在 `visual-check/scenarios.ts` 维护（场景清单驱动）
 - 跑前确保 :1420 未被占用
 - 通过 `addInitScript` 注入 `window.__TAURI_INTERNALS__.invoke` mock + `__TAURI_EVENT_PLUGIN_INTERNALS__` 桩，返回 `visual-check/fixtures.ts` 的边界数据
+- 注意：本环境里 Claude `Read` 截图走 CDN 上传（不内联），CDN 激进去重会喂旧/错图，分析不可靠；要可靠分析请把截图直接贴进对话，或改用脚本内调视觉 API（base64）
+
+## 自动修复 (CI Auto-fix)
+
+`.github/workflows/test.yml` 里的 `autofix` job：PR 上 `npm test` 或 `cargo test` 失败时，自动触发 [`anthropics/claude-code-action`](https://github.com/anthropics/claude-code-action) 尝试【最小修复】并提交回 PR 分支；修不了会在 PR 留评论。人审 PR 合并为唯一闸门（不合并不强制）。
+
+**激活前提（缺一不可）：**
+1. push 到 origin（CI 工作流必须在 GitHub 上才会跑）。
+2. repo **Settings → Secrets and variables → Actions → New repository secret**：`ANTHROPIC_API_KEY`。
+
+**约束：** prompt 限定最小改动、不改测试断言、`--max-turns 30` 兜底；只在 `pull_request` 失败时触发（push 到 main 不自动修）。每次失败触发一次 Claude 运行（API 费用）。
