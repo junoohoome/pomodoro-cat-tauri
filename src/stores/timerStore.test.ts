@@ -276,68 +276,6 @@ describe("timerStore", () => {
     });
   });
 
-  describe("switchToBreak", () => {
-    it("switches to short break when completedPomodorosInSession < 4", () => {
-      vi.useFakeTimers();
-      vi.setSystemTime(new Date("2026-01-01T12:00:00Z"));
-
-      useTimerStore.setState({
-        storedBreakDuration: 5,
-        storedLongBreakDuration: 15,
-        completedPomodorosInSession: 3,
-      });
-
-      const store = useTimerStore.getState();
-      store.switchToBreak();
-
-      const state = useTimerStore.getState();
-      expect(state.state).toBe("running");
-      expect(state.type).toBe("break");
-      expect(state.remainingSeconds).toBe(5 * 60); // Short break
-      expect(state.totalSeconds).toBe(5 * 60);
-      expect(state.targetEndTime).toBe(1767269100000); // +5 minutes
-
-      expect(mockedEmit).toHaveBeenCalledWith("timer-state", {
-        state: "break",
-        targetEndTime: 1767269100000,
-      });
-      expect(mockedEmit).toHaveBeenCalledWith("timer-tick", {
-        remaining: 5 * 60,
-      });
-
-      vi.useRealTimers();
-    });
-
-    it("switches to long break when completedPomodorosInSession >= 4", () => {
-      vi.useFakeTimers();
-      vi.setSystemTime(new Date("2026-01-01T12:00:00Z"));
-
-      useTimerStore.setState({
-        storedBreakDuration: 5,
-        storedLongBreakDuration: 15,
-        completedPomodorosInSession: 4,
-      });
-
-      const store = useTimerStore.getState();
-      store.switchToBreak();
-
-      const state = useTimerStore.getState();
-      expect(state.remainingSeconds).toBe(15 * 60); // Long break
-      expect(state.totalSeconds).toBe(15 * 60);
-      expect(state.targetEndTime).toBe(1767269700000); // +15 minutes
-
-      expect(mockedEmit).toHaveBeenCalledWith("timer-state", {
-        state: "break",
-        targetEndTime: 1767269700000,
-      });
-      expect(mockedEmit).toHaveBeenCalledWith("timer-tick", {
-        remaining: 15 * 60,
-      });
-
-      vi.useRealTimers();
-    });
-  });
-
   describe("prepareBreakMode", () => {
     it("prepares break mode idle state with short break", () => {
       vi.useFakeTimers();
@@ -524,35 +462,6 @@ describe("timerStore", () => {
       expect(state.state).toBe("running"); // Still running!
 
       vi.useRealTimers();
-    });
-  });
-
-  describe("DEAD CODE?: switchToBreak and switchToFocus usage", () => {
-    it.skip("TODO: switchToBreak appears to be dead code", () => {
-      // grep analysis shows switchToBreak is only:
-      // 1. Defined in timerStore.ts
-      // 2. Exported in timerStore.ts interface
-      // 3. NOT called anywhere in the codebase
-      // GlobalTimer uses prepareBreakMode() instead, which sets idle state
-      // Then GlobalTimer calls start() separately
-
-      // This test would fail if called, proving it's not used
-      const store = useTimerStore.getState();
-      store.switchToBreak();
-
-      // If this were called, it would transition to running state immediately
-      // But GlobalTimer uses prepareBreakMode (idle) + start (running) pattern
-    });
-
-    it.skip("TODO: switchToFocus is only called from Timer.tsx button", () => {
-      // grep analysis shows switchToFocus is only:
-      // 1. Defined in timerStore.ts
-      // 2. Exported in timerStore.ts interface
-      // 3. Called from Timer.tsx button onClick handler
-      // 4. NOT called from GlobalTimer completion flow
-
-      // GlobalTimer calls stop() after break completion, not switchToFocus()
-      // So switchToFocus is manual user action only
     });
   });
 });

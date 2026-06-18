@@ -49,7 +49,6 @@ interface TimerStore {
   pause: () => void;
   resume: () => void;
   stop: () => void;
-  switchToBreak: () => void;
   prepareBreakMode: () => void;
   switchToFocus: () => void;
   setTaskId: (taskId: number | undefined) => void;
@@ -149,29 +148,6 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
     });
 
     emitTimerState("idle", "focus", null);
-  },
-
-  switchToBreak: () => {
-    const { storedBreakDuration, storedLongBreakDuration, completedPomodorosInSession } = get();
-    const isLongBreak = completedPomodorosInSession >= 4;
-    const breakMinutes = isLongBreak ? storedLongBreakDuration : storedBreakDuration;
-    const breakSeconds = breakMinutes * 60;
-
-    const now = Date.now();
-    const targetEndTime = now + (breakSeconds * 1000);
-
-    set({
-      state: "running",
-      type: "break",
-      remainingSeconds: breakSeconds,
-      totalSeconds: breakSeconds,
-      startTime: now,
-      targetEndTime: targetEndTime,
-      pausedRemainingSeconds: null,
-    });
-
-    emitTimerState("running", "break", targetEndTime);
-    emitTimerTick(breakSeconds);
   },
 
   prepareBreakMode: () => {
